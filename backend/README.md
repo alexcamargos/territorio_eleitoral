@@ -482,16 +482,17 @@ Ao implementar qualquer alteração neste serviço, as seguintes regras são abs
 
 ## Documentação de Referência
 
-Para detalhes aprofundados sobre cada subsistema, consulte a documentação técnica oficial:
+Para detalhes aprofundados sobre a modelagem, decisões de arquitetura e metodologia do backend, consulte a **documentação técnica oficial do projeto**:
 
+- [**docs/README.md**](../docs/README.md) — Portal Central da Documentação: Sumário executivo, glossário canônico e resumo das 7 Decisões de Ouro do MVP.
+- [**docs/02-arquitetura.md**](../docs/02-arquitetura.md) — Arquitetura "As Quatro Caixas", isolamento funcional e fluxo de dados.
+- [**docs/03-fontes-de-dados.md**](../docs/03-fontes-de-dados.md) — Especificações de cada API pública governamental (TSE, IBGE, CGU, Tesouro) e integridade criptográfica SHA-256.
+- [**docs/04-catalogo-de-indicadores.md**](../docs/04-catalogo-de-indicadores.md) — Catálogo detalhado de indicadores socioeconômicos e fiscais e metadados.
+- [**docs/05-pipeline-etl.md**](../docs/05-pipeline-etl.md) — Especificação detalhada da Fábrica de ETL, validação com Pandera e Crosswalk 1:1 estrito.
+- [**docs/06-modelo-de-dados.md**](../docs/06-modelo-de-dados.md) — DDL, tabelas, views materializadas, PostGIS e 3 LODs topológicos via `ST_CoverageSimplify`.
+- [**docs/07-metodologia.md**](../docs/07-metodologia.md) — Metodologia científica, fórmulas estatísticas, decis ponderados por eleitorado e classificação Bolognesi et al. (2023).
+- [**docs/08-api.md**](../docs/08-api.md) — Contrato da API REST FastAPI, geração de Vector Tiles MVT sob demanda e estratégia de cache HTTP.
+- [**docs/11-padroes-e-testes.md**](../docs/11-padroes-e-testes.md) — Padrões de código PEP 8/Google e suíte de testes automatizados com Pytest (100% livre de `unittest`).
+- [**docs/12-plano-de-implementacao.md**](../docs/12-plano-de-implementacao.md) — Ciclo de entrega das Fases F0 a F5 e roadmap de deploy gratuito em nuvem (Fase F6).
+- [**docs/13-decisoes-arquiteturais.md**](../docs/13-decisoes-arquiteturais.md) — Registro histórico formal de Architecture Decision Records (ADRs 001 a 007).
 - [**README Principal do Projeto**](../README.md) — Visão do produto, frontend e guia de execução da stack completa.
-- [**AGENTS.md**](../AGENTS.md) — Regras de engenharia e convenções para desenvolvedores e agentes.
-- [**docs/02-arquitetura.md**](../docs/02-arquitetura.md) — Arquitetura "As Quatro Caixas" e fluxo de dados.
-- [**docs/03-fontes-de-dados.md**](../docs/03-fontes-de-dados.md) — Especificações de cada API pública governamental.
-- [**docs/04-catalogo-de-indicadores.md**](../docs/04-catalogo-de-indicadores.md) — Catálogo detalhado de indicadores socioeconômicos e fiscais.
-- [**docs/05-pipeline-etl.md**](../docs/05-pipeline-etl.md) — Especificação detalhada de cada etapa da Fábrica.
-- [**docs/06-modelo-de-dados.md**](../docs/06-modelo-de-dados.md) — DDL, tabelas, views materializadas e índices do PostGIS.
-- [**docs/07-metodologia.md**](../docs/07-metodologia.md) — Fórmulas estatísticas, regras eleitorais e classificação ideológica.
-- [**docs/08-api.md**](../docs/08-api.md) — Contrato da API REST, esquemas MVT e estratégia de cache.
-- [**docs/11-padroes-e-testes.md**](../docs/11-padroes-e-testes.md) — Padrões de código, formatação e suíte de testes.
-- [**docs/13-decisoes-arquiteturais.md**](../docs/13-decisoes-arquiteturais.md) — Registro histórico de decisões de arquitetura (ADRs).
