@@ -350,23 +350,23 @@ npm run test:run
 
 ```text
 territorio_eleitoral/
-├── AGENTS.md                  # Ponto de entrada e regras inegociáveis para agentes e engenheiros
 ├── README.md                  # Documentação geral do projeto e guia para usuários
 ├── docker-compose.yml         # Container PostgreSQL 17 + PostGIS 3.5
-├── docs/                      # 13 documentos de especificação técnica e arquitetural
-│   ├── 01-produto.md          # Visão, escopo, personas e jornada de storytelling
-│   ├── 02-arquitetura.md      # As 4 caixas, fluxo de dados e princípios
-│   ├── 03-fontes-de-dados.md  # Especificação técnica detalhada de cada fonte pública
-│   ├── 04-catalogo-de-indicadores.md # Catálogo de indicadores e prioridades
-│   ├── 05-pipeline-etl.md     # Pipeline, De-Para, idempotência e tratamento
-│   ├── 06-modelo-de-dados.md  # DDL, tabelas, views materializadas e índices
-│   ├── 07-metodologia.md      # Regras eleitorais, ideologia e formulações estatísticas
-│   ├── 08-api.md              # Contrato REST, MVT tiles, schemas e cache
-│   ├── 09-frontend.md         # Arquitetura Preact, componentes, reatividade e mapa
-│   ├── 10-design-system.md    # Design system, tokens, paletas e acessibilidade WCAG
-│   ├── 11-padroes-e-testes.md # Padrões de código, tipagem e estratégia de testes
-│   ├── 12-plano-de-implementacao.md # Plano de fases F0 a F6 com critérios de aceite
-│   └── 13-decisoes-arquiteturais.md # ADRs arquiteturais estruturantes
+├── docs/                      # DOCUMENTAÇÃO OFICIAL: Como e por que as decisões foram tomadas no MVP
+│   ├── README.md              # Portal central da documentação técnica e sumário executivo
+│   ├── 01-produto.md          # Visão do produto, personas, jornada em 4 passos e trilhas prontas
+│   ├── 02-arquitetura.md      # As Quatro Caixas (Fábrica, Memória, Cérebro e Palco) e fluxo de dados
+│   ├── 03-fontes-de-dados.md  # Fontes governamentais (TSE, IBGE, CGU, Tesouro), hashes SHA-256 e proveniência
+│   ├── 04-catalogo-de-indicadores.md # Matriz unificada de indicadores sociais, econômicos e fiscais
+│   ├── 05-pipeline-etl.md     # Pipeline de dados, contratos Pandera, Crosswalk 1:1 e carga COPY
+│   ├── 06-modelo-de-dados.md  # Modelagem relacional, PostGIS, 3 LODs topológicos e views materializadas
+│   ├── 07-metodologia.md      # Rigor estatístico, combate à falácia ecológica e escala Bolognesi (2023)
+│   ├── 08-api.md              # Contrato da API REST FastAPI, Vector Tiles MVT e cache HTTP 304
+│   ├── 09-frontend.md         # Arquitetura Preact 10, Signals, MapLibre GL WebGL e D3 Quadtree
+│   ├── 10-design-system.md    # Design system "Atlas Cívico Editorial", reserva cromática e WCAG 2.2 AA
+│   ├── 11-padroes-e-testes.md # Padrões PEP 8/Google, 137 testes (pytest + vitest) e testes E2E headless
+│   ├── 12-plano-de-implementacao.md # Ciclo de entrega das Fases F0 a F5 e roadmap pós-MVP (Fase F6)
+│   └── 13-decisoes-arquiteturais.md # Registro detalhado de Decisões de Arquitetura (ADRs 001 a 007)
 ├── backend/
 │   ├── pyproject.toml         # Configuração do uv, dependências, ruff e pytest
 │   ├── alembic.ini            # Configuração do Alembic
@@ -404,22 +404,22 @@ territorio_eleitoral/
 
 ## Mapa da Documentação Técnica
 
-Para aprofundar-se em qualquer aspecto técnico do projeto, consulte a documentação detalhada:
+A pasta [`docs/`](docs/) contém a **documentação técnica oficial do projeto**, elaborada para desenvolvedores, pesquisadores e jornalistas de dados, com explicações aprofundadas sobre como e por que cada decisão foi aplicada no MVP:
 
-- [**AGENTS.md**](AGENTS.md) — Regras inegociáveis de engenharia, arquitetura e convenções para agentes de IA e desenvolvedores.
-- [**docs/01-produto.md**](docs/01-produto.md) — Escopo do MVP, personas e requisitos de produto.
-- [**docs/02-arquitetura.md**](docs/02-arquitetura.md) — Diagrama de caixas, tecnologias e fluxo de dados.
-- [**docs/03-fontes-de-dados.md**](docs/03-fontes-de-dados.md) — Análise detalhada de cada API e fonte governamental.
-- [**docs/04-catalogo-de-indicadores.md**](docs/04-catalogo-de-indicadores.md) — Catálogo de indicadores e prioridades.
-- [**docs/05-pipeline-etl.md**](docs/05-pipeline-etl.md) — Especificação do pipeline de dados e regras de validação.
-- [**docs/06-modelo-de-dados.md**](docs/06-modelo-de-dados.md) — DDL, tabelas, views materializadas e índices espaciais.
-- [**docs/07-metodologia.md**](docs/07-metodologia.md) — Regras eleitorais, classificação partidária e fórmulas estatísticas.
-- [**docs/08-api.md**](docs/08-api.md) — Contrato da API REST, endpoints e vector tiles.
-- [**docs/09-frontend.md**](docs/09-frontend.md) — Arquitetura da interface, WebGL e sincronização reativa.
-- [**docs/10-design-system.md**](docs/10-design-system.md) — Tokens de design, cores, tipografia e acessibilidade.
-- [**docs/11-padroes-e-testes.md**](docs/11-padroes-e-testes.md) — Padrões de código, formatação e convenções de teste.
-- [**docs/12-plano-de-implementacao.md**](docs/12-plano-de-implementacao.md) — Roteiro de fases e critérios de aceite.
-- [**docs/13-decisoes-arquiteturais.md**](docs/13-decisoes-arquiteturais.md) — Registro histórico de ADRs e decisões tomadas.
+- [**docs/README.md**](docs/README.md) — **Portal Central da Documentação**: Sumário executivo, glossário canônico e resumo das 7 Decisões de Ouro.
+- [**docs/01-produto.md**](docs/01-produto.md) — Visão do produto, personas reais, jornada em 4 passos (*Story Stepper*), trilhas prontas e não-objetivos.
+- [**docs/02-arquitetura.md**](docs/02-arquitetura.md) — A arquitetura "As Quatro Caixas" (Fábrica, Memória, Cérebro e Palco), fluxo de dados e vedações por camada.
+- [**docs/03-fontes-de-dados.md**](docs/03-fontes-de-dados.md) — Fontes governamentais oficiais (TSE, IBGE, CGU, Tesouro Nacional), integridade SHA-256 e casos de borda territoriais.
+- [**docs/04-catalogo-de-indicadores.md**](docs/04-catalogo-de-indicadores.md) — Matriz completa de indicadores (sociais, econômicos, fiscais e compostos) com rampas seguras de cor.
+- [**docs/05-pipeline-etl.md**](docs/05-pipeline-etl.md) — Especificação detalhada da Fábrica de ETL, validação de esquemas com Pandera e Crosswalk 1:1 estrito.
+- [**docs/06-modelo-de-dados.md**](docs/06-modelo-de-dados.md) — DDL físico no PostgreSQL 17 + PostGIS 3.5, 3 LODs topológicos via `ST_CoverageSimplify` e views materializadas.
+- [**docs/07-metodologia.md**](docs/07-metodologia.md) — Metodologia científica, combate à falácia ecológica, cálculo de decis ponderados por eleitorado e classificação Bolognesi et al. (2023).
+- [**docs/08-api.md**](docs/08-api.md) — Contrato da API REST FastAPI, geração de Vector Tiles MVT binários sob demanda e política de cache `ETag`/`304`.
+- [**docs/09-frontend.md**](docs/09-frontend.md) — Arquitetura da interface com Preact 10, Signals, MapLibre GL JS (recoloração GPU < 300 ms) e Scatter Plot acelerado por Quadtree.
+- [**docs/10-design-system.md**](docs/10-design-system.md) — Identidade visual "Atlas Cívico Editorial", reserva cromática estrita para política e acessibilidade WCAG 2.2 AA.
+- [**docs/11-padroes-e-testes.md**](docs/11-padroes-e-testes.md) — Padrões de código PEP 8 e docstrings Google, suíte de 137 testes automatizados e testes E2E headless.
+- [**docs/12-plano-de-implementacao.md**](docs/12-plano-de-implementacao.md) — Histórico das Fases F0 a F5 entregues no MVP e roadmap de evolução (Fase F6).
+- [**docs/13-decisoes-arquiteturais.md**](docs/13-decisoes-arquiteturais.md) — Registro exaustivo de Architecture Decision Records (ADRs 001 a 007) com alternativas e trade-offs.
 
 ---
 
