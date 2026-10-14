@@ -1,0 +1,127 @@
+/**
+ * Design System Tokens — "Atlas Cívico Editorial" (docs/10-design-system.md)
+ * Strict rule: Red/Terracotta and Blue/Cobalt are reserved exclusively for
+ * political blocs (Left / Right). Socioeconomic indicators use neutral ramps.
+ */
+
+:root,
+[data-theme="light"] {
+  /* Superfícies (Papel Cartográfico Quente) */
+  --surface-app: #F7F5F0;
+  --surface-panel: #FCFBF9;
+  --surface-elevated: #FFFFFF;
+  --surface-muted: #EFECE6;
+  --surface-map-bg: #EAE6DF;
+  --surface-map-nodata: #D6D3CD;
+
+  /* Tipografia */
+  --text-primary: #16181D;
+  --text-secondary: #4A505C;
+  --text-muted: #6E7685;
+  --text-inverse: #FCFBF9;
+
+  /* Bordas e Divisores */
+  --border-subtle: #E4E0D8;
+  --border-strong: #C8C2B8;
+  --border-focus: #1D4ED8;
+  --map-mun-stroke: rgba(22, 24, 29, 0.14);
+  --map-uf-stroke: rgba(22, 24, 29, 0.55);
+  --map-hover-stroke: #16181D;
+
+  /* Espectro Político (Reservado para Votação) */
+  --bloc-left-strong: #991B1B;
+  --bloc-left: #C83E31;
+  --bloc-left-soft: #F3C6C0;
+  --bloc-center-strong: #B45309;
+  --bloc-center: #D97706;
+  --bloc-center-soft: #FDE68A;
+  --bloc-right-soft: #BFDBFE;
+  --bloc-right: #2563EB;
+  --bloc-right-strong: #1E3A8A;
+  --bloc-neutral-mid: #F2EFE9;
+
+  /* Acento de UI (Neutro em relação aos partidos: Verde-Petróleo Cívico) */
+  --accent-ui: #0F766E;
+  --accent-ui-hover: #115E59;
+  --accent-ui-soft: #CCFBF1;
+
+  /* Semânticos de Qualidade/Metodologia */
+  --status-caveat-bg: #FEF3C7;
+  --status-caveat-text: #92400E;
+  --status-caveat-border: #F59E0B;
+
+  /* Sombras discretas */
+  --shadow-floating: 0 4px 16px rgba(22, 24, 29, 0.08);
+  --shadow-drawer: -4px 0 24px rgba(22, 24, 29, 0.12);
+
+  /* Famílias Tipográficas */
+  --font-editorial: "Newsreader", "Source Serif 4", Georgia, Cambria, serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
+
+  /* Escala Tipográfica */
+  --type-headline-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  --type-headline-lh: 1.25;
+  --type-section-size: 1.0625rem;
+  --type-section-lh: 1.35;
+  --type-body-size: 0.9375rem;
+  --type-body-lh: 1.55;
+  --type-control-size: 0.875rem;
+  --type-control-lh: 1.25;
+  --type-caption-size: 0.75rem;
+  --type-caption-lh: 1.35;
+  --type-kpi-size: 1.5rem;
+  --type-kpi-lh: 1.15;
+
+  /* Espaçamento (múltiplos de 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+}
+
+[data-theme="dark"] {
+  --surface-app: #0E131B;
+  --surface-panel: #151C28;
+  --surface-elevated: #1D2636;
+  --surface-muted: #232D3F;
+  --surface-map-bg: #0A0E14;
+  --surface-map-nodata: #2A3241;
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-inverse: #0E131B;
+
+  --border-subtle: #242F42;
+  --border-strong: #384761;
+  --border-focus: #60A5FA;
+  --map-mun-stroke: rgba(241, 245, 249, 0.12);
+  --map-uf-stroke: rgba(241, 245, 249, 0.55);
+  --map-hover-stroke: #F8FAFC;
+
+  --bloc-left-strong: #FCA5A5;
+  --bloc-left: #EF4444;
+  --bloc-left-soft: #451A1A;
+  --bloc-center-strong: #FCD34D;
+  --bloc-center: #F59E0B;
+  --bloc-center-soft: #452B0A;
+  --bloc-right-soft: #172554;
+  --bloc-right: #3B82F6;
+  --bloc-right-strong: #93C5FD;
+  --bloc-neutral-mid: #1E2532;
+
+  --accent-ui: #14B8A6;
+  --accent-ui-hover: #2DD4BF;
+  --accent-ui-soft: #134E4A;
+
+  --status-caveat-bg: #3B270B;
+  --status-caveat-text: #FDE68A;
+  --status-caveat-border: #D97706;
+
+  --shadow-floating: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.45);
+}
