@@ -1,0 +1,2185 @@
+# Catálogo canônico de indicadores socioeconômicos, demográficos, fiscais e eleitorais.
+# Fonte da verdade em runtime (ver docs/04-catalogo-de-indicadores.md e AGENTS.md).
+#
+# Regras inegociáveis:
+# 1. `code` é imutável após publicação (contrato da API e de URLs compartilháveis).
+# 2. `label` deve ter no máximo 32 caracteres (pt-BR).
+# 3. `higher_is` ("better" | "worse" | "neutral") é usado APENAS em templates de texto,
+#    NUNCA para atribuir cores vermelha/azul (reservadas ao espectro ideológico).
+# 4. Indicadores com `verified: false` exigem `--allow-unverified` na carga de ETL.
+
+schema_version: 1
+
+themes:
+  economy:
+    label_pt: "Economia e renda"
+    order: 1
+  transfers:
+    label_pt: "Transferências de renda"
+    order: 2
+  social:
+    label_pt: "Social e demografia"
+    order: 3
+  education:
+    label_pt: "Educação"
+    order: 4
+  health:
+    label_pt: "Saúde"
+    order: 5
+  infrastructure:
+    label_pt: "Infraestrutura urbana"
+    order: 6
+  fiscal:
+    label_pt: "Gestão fiscal"
+    order: 7
+  composite:
+    label_pt: "Índices compostos"
+    order: 8
+  electoral:
+    label_pt: "Perfil eleitoral"
+    order: 9
+
+coverage_exceptions:
+  - cd_ibge: 5101837
+    name: "Boa Esperança do Norte"
+    uf: "MT"
+    installed_year: 2025
+    applies_to_ref_years_before: 2025
+    missing_reason: "municipio_inexistente_no_periodo"
+    note: "Município instalado em 01/01/2025; ausente no Censo 2022 e em séries históricas anteriores a 2025."
+  - cd_ibge: 5300108
+    name: "Brasília"
+    uf: "DF"
+    applies_to_adapters: ["siconfi", "ckan"]
+    missing_reason: "distrito_federal_regime_estadual"
+    note: "O Distrito Federal acumula competências estaduais e municipais e não integra bases exclusivamente municipais do Tesouro (DCA municipal / CAPAG Municípios)."
+  - cd_ibge: 2605459
+    name: "Fernando de Noronha"
+    uf: "PE"
+    applies_to_adapters: ["siconfi", "ckan"]
+    missing_reason: "distrito_estadual_sem_prefeitura"
+    note: "Distrito estadual de Pernambuco sem prefeitura/câmara municipal; não declara DCA municipal nem possui nota CAPAG municipal."
+
+indicators:
+  # ==========================================================================
+  # N1 — BASE (DENOMINADORES E DEMOGRAFIA BÁSICA)
+  # ==========================================================================
+  - code: population
+    label: "População (Censo)"
+    description: "População residente total do município recenseada no Censo Demográfico de 2022."
+    theme: social
+    tier: 1
+    unit: "pessoas"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [500, 15000000]
+    source:
+      adapter: sidra
+      params:
+        table: 4709
+        variable: 93
+        period: "2022"
+      name: "IBGE — Censo Demográfico 2022"
+      url: "https://sidra.ibge.gov.br/tabela/4709"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: População residente."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: population_estimate
+    label: "População estimada"
+    description: "População residente estimada anualmente pelo IBGE para o município."
+    theme: social
+    tier: 1
+    unit: "pessoas"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [500, 15000000]
+    source:
+      adapter: sidra
+      params:
+        table: 6579
+        variable: 9324
+        period: "last"
+        fallback_pesquisas_id: 29171
+      name: "IBGE — Estimativas da População"
+      url: "https://sidra.ibge.gov.br/tabela/6579"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Estimativas da população residente nos municípios brasileiros."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: area_km2
+    label: "Área territorial"
+    description: "Área territorial oficial do município na Malha Municipal do IBGE."
+    theme: infrastructure
+    tier: 1
+    unit: "km²"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [1.0, 165000.0]
+    source:
+      adapter: ibge_geo
+      params:
+        column: "AREA_KM2"
+        year: 2025
+      name: "IBGE — Malha Municipal 2025"
+      url: "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2025/Brasil/BR_Municipios_2025.zip"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Malha Municipal Digital do Brasil, 2025."
+    transform: null
+    ref_year_policy: "fixed:2025"
+    min_coverage: 1.0
+    caveat: null
+    verified: true
+
+  - code: density
+    label: "Densidade demográfica"
+    description: "Razão entre a população residente (Censo 2022) e a área territorial do município."
+    theme: social
+    tier: 1
+    unit: "hab./km²"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [0.05, 16000.0]
+    source:
+      adapter: derived
+      params:
+        expr: "population / area_km2"
+        inputs:
+          population: population
+          area_km2: area_km2
+      name: "IBGE — Censo 2022 e Malha Municipal 2025 (derivado)"
+      url: "https://sidra.ibge.gov.br/tabela/4709"
+      license: "Dados públicos (LAI)"
+      citation: "Cálculo próprio a partir do Censo Demográfico 2022 e da Malha Municipal 2025 do IBGE."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  # ==========================================================================
+  # N1 — ECONOMIA E RENDA
+  # ==========================================================================
+  - code: gdp_per_capita
+    label: "PIB per capita"
+    description: "Produto Interno Bruto municipal a preços correntes dividido pela população estimada do mesmo ano."
+    theme: economy
+    tier: 1
+    unit: "R$"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [1000.0, 2000000.0]
+    source:
+      adapter: sidra
+      params:
+        table: 5938
+        variable: 37
+        period: "last"
+      name: "IBGE — PIB dos Municípios"
+      url: "https://sidra.ibge.gov.br/tabela/5938"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Produto Interno Bruto dos Municípios."
+    transform:
+      multiply: 1000
+      per_capita:
+        population: population_estimate
+        same_year: true
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: gdp_agro_share
+    label: "Peso da agropecuária no PIB"
+    description: "Participação do Valor Adicionado Bruto da agropecuária no Valor Adicionado Bruto total do município."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [-100.0, 250.0]
+    source:
+      adapter: sidra
+      params:
+        table: 5938
+        variable: 516
+        period: "2021"
+        raw_numerator_variable: 513
+        raw_denominator_variable: 498
+      name: "IBGE — PIB dos Municípios"
+      url: "https://sidra.ibge.gov.br/tabela/5938"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Produto Interno Bruto dos Municípios."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: "Última abertura setorial do VAB disponível na tabela 5938 do SIDRA refere-se a 2021 (em 2022–2023 o IBGE divulgou apenas o PIB total municipal)."
+    verified: true
+
+  - code: gdp_industry_share
+    label: "Peso da indústria no PIB"
+    description: "Participação do Valor Adicionado Bruto da indústria no Valor Adicionado Bruto total do município."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [-100.0, 250.0]
+    source:
+      adapter: sidra
+      params:
+        table: 5938
+        variable: 520
+        period: "2021"
+        raw_numerator_variable: 517
+        raw_denominator_variable: 498
+      name: "IBGE — PIB dos Municípios"
+      url: "https://sidra.ibge.gov.br/tabela/5938"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Produto Interno Bruto dos Municípios."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: "Última abertura setorial do VAB disponível na tabela 5938 do SIDRA refere-se a 2021."
+    verified: true
+
+  - code: gdp_services_share
+    label: "Peso dos serviços no PIB"
+    description: "Participação do Valor Adicionado Bruto dos serviços (exclusive administração pública) no VAB total do município."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [-100.0, 250.0]
+    source:
+      adapter: sidra
+      params:
+        table: 5938
+        variable: 6574
+        period: "2021"
+        raw_numerator_variable: 6575
+        raw_denominator_variable: 498
+      name: "IBGE — PIB dos Municípios"
+      url: "https://sidra.ibge.gov.br/tabela/5938"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Produto Interno Bruto dos Municípios."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: "Última abertura setorial do VAB disponível na tabela 5938 do SIDRA refere-se a 2021."
+    verified: true
+
+  - code: gdp_public_admin_share
+    label: "Peso da adm. pública no PIB"
+    description: "Participação do VAB da administração, defesa, educação e saúde públicas e seguridade social no VAB total do município."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [-100.0, 250.0]
+    source:
+      adapter: sidra
+      params:
+        table: 5938
+        variable: 528
+        period: "2021"
+        raw_numerator_variable: 525
+        raw_denominator_variable: 498
+      name: "IBGE — PIB dos Municípios"
+      url: "https://sidra.ibge.gov.br/tabela/5938"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Produto Interno Bruto dos Municípios."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.999
+    caveat: "Última abertura setorial do VAB disponível na tabela 5938 do SIDRA refere-se a 2021."
+    verified: true
+
+  - code: household_income_pc
+    label: "Renda domiciliar per capita"
+    description: "Valor do rendimento nominal médio mensal domiciliar per capita dos domicílios particulares permanentes ocupados (Censo 2022)."
+    theme: economy
+    tier: 1
+    unit: "R$"
+    value_type: continuous
+    higher_is: better
+    scale_hint: log
+    valid_range: [100.0, 15000.0]
+    source:
+      adapter: sidra
+      params:
+        table: 10295
+        variable: 13431
+        period: "2022"
+        classifications:
+          c2: "6794"
+          c86: "95251"
+          c58: "95253"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 293433
+      name: "IBGE — Censo Demográfico 2022"
+      url: "https://sidra.ibge.gov.br/tabela/10295"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Rendimento domiciliar per capita."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: avg_formal_wage
+    label: "Salário médio mensal (formal)"
+    description: "Salário médio mensal dos trabalhadores formais do município, expresso em salários mínimos (CEMPRE/IBGE)."
+    theme: economy
+    tier: 1
+    unit: "salários mínimos"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.5, 20.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60038
+        period: "last"
+      name: "IBGE — Cadastro Central de Empresas (CEMPRE)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Cadastro Central de Empresas (CEMPRE)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: employed_pct
+    label: "População ocupada"
+    description: "Percentual do pessoal ocupado em empresas e outras organizações formais em relação à população municipal (CEMPRE/IBGE)."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 150.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60036
+        period: "last"
+      name: "IBGE — Cadastro Central de Empresas (CEMPRE)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Cadastro Central de Empresas (CEMPRE)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: "Pode superar 100% em polos de emprego com forte pendularidade intermunicipal."
+    verified: true
+
+  - code: low_income_households_pct
+    label: "Domicílios até ½ SM per capita"
+    description: "Percentual da população residente em domicílios com rendimento nominal mensal per capita de até 1/2 salário mínimo."
+    theme: economy
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60037
+        period: "2010"
+      name: "IBGE — Censo Demográfico 2010 (Panorama IBGE Cidades)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2010."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (Censo 2010): série mantida no Panorama IBGE Cidades; preferir `household_income_pc` (Censo 2022) para análises recentes."
+    verified: true
+
+  # ==========================================================================
+  # N1 — TRANSFERÊNCIAS DE RENDA (PORTAL DA TRANSPARÊNCIA — CGU)
+  # ==========================================================================
+  - code: bolsa_familia_pc
+    label: "Bolsa Família per capita"
+    description: "Valor total repassado pelo Novo Bolsa Família no mês de referência dividido pela população estimada do município."
+    theme: transfers
+    tier: 1
+    unit: "R$/hab. no mês"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 1000.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "novo-bolsa-familia-por-municipio"
+        field: "valor"
+        ref_month: "202609"
+        months: 1
+      name: "CGU — Portal da Transparência (Novo Bolsa Família)"
+      url: "https://portaldatransparencia.gov.br/beneficios/bolsa-familia"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — Novo Bolsa Família por Município."
+    transform:
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: bolsa_familia_coverage
+    label: "Famílias no Bolsa Família"
+    description: "Quantidade de famílias beneficiadas pelo Novo Bolsa Família por mil habitantes no mês de referência."
+    theme: transfers
+    tier: 1
+    unit: "por mil hab."
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 500.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "novo-bolsa-familia-por-municipio"
+        field: "quantidadeBeneficiados"
+        ref_month: "202609"
+        months: 1
+      name: "CGU — Portal da Transparência (Novo Bolsa Família)"
+      url: "https://portaldatransparencia.gov.br/beneficios/bolsa-familia"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — Novo Bolsa Família por Município."
+    transform:
+      multiply: 1000
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: bpc_pc
+    label: "BPC per capita"
+    description: "Valor total pago pelo Benefício de Prestação Continuada (BPC/LOAS) no mês de referência dividido pela população estimada."
+    theme: transfers
+    tier: 1
+    unit: "R$/hab. no mês"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 1000.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "bpc-por-municipio"
+        field: "valor"
+        ref_month: "202609"
+        months: 1
+      name: "CGU — Portal da Transparência (BPC)"
+      url: "https://portaldatransparencia.gov.br/beneficios/bpc"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — BPC por Município."
+    transform:
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: bpc_coverage
+    label: "Beneficiários do BPC"
+    description: "Quantidade de beneficiários do BPC (idosos e pessoas com deficiência) por mil habitantes no mês de referência."
+    theme: transfers
+    tier: 1
+    unit: "por mil hab."
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 300.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "bpc-por-municipio"
+        field: "quantidadeBeneficiados"
+        ref_month: "202609"
+        months: 1
+      name: "CGU — Portal da Transparência (BPC)"
+      url: "https://portaldatransparencia.gov.br/beneficios/bpc"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — BPC por Município."
+    transform:
+      multiply: 1000
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: garantia_safra_coverage
+    label: "Beneficiários Garantia-Safra"
+    description: "Beneficiários acumulados do Garantia-Safra nos 12 meses anteriores à eleição (202510–202609) por mil habitantes."
+    theme: transfers
+    tier: 1
+    unit: "por mil hab."
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [0.0, 1000.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "safra-por-municipio"
+        field: "quantidadeBeneficiados"
+        ref_month: "202609"
+        months: 12
+        agg: "sum"
+        zero_when_absent: true
+      name: "CGU — Portal da Transparência (Garantia-Safra)"
+      url: "https://portaldatransparencia.gov.br/beneficios"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — Garantia-Safra por Município."
+    transform:
+      multiply: 1000
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: "Programa sazonal focado no semiárido; contabiliza a janela acumulada de 12 meses (out/2025 a set/2026)."
+    verified: true
+
+  - code: seguro_defeso_coverage
+    label: "Beneficiários Seguro-Defeso"
+    description: "Beneficiários acumulados do Seguro-Defeso (pescador artesanal) nos 12 meses anteriores à eleição (202510–202609) por mil habitantes."
+    theme: transfers
+    tier: 1
+    unit: "por mil hab."
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [0.0, 1000.0]
+    source:
+      adapter: transparencia
+      params:
+        endpoint: "seguro-defeso-por-municipio"
+        field: "quantidadeBeneficiados"
+        ref_month: "202609"
+        months: 12
+        agg: "sum"
+        zero_when_absent: true
+      name: "CGU — Portal da Transparência (Seguro-Defeso)"
+      url: "https://portaldatransparencia.gov.br/beneficios"
+      license: "Dados públicos (LAI)"
+      citation: "Controladoria-Geral da União. Portal da Transparência — Seguro-Defeso por Município."
+    transform:
+      multiply: 1000
+      per_capita:
+        population: population_estimate
+        same_year: false
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: "Programa sazonal vinculado aos períodos de defeso pesqueiro; contabiliza a janela de 12 meses (out/2025 a set/2026)."
+    verified: true
+
+  - code: income_transfers_pc
+    label: "Dependência de transf. de renda"
+    description: "Soma mensal per capita das transferências federais diretas de renda (Novo Bolsa Família, BPC e média mensal de Garantia-Safra e Seguro-Defeso)."
+    theme: transfers
+    tier: 1
+    unit: "R$/hab. no mês"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 2000.0]
+    source:
+      adapter: derived
+      params:
+        expr: "bolsa_familia_pc + bpc_pc"
+        optional_seasonal_endpoints:
+          - "safra-por-municipio"
+          - "seguro-defeso-por-municipio"
+        inputs:
+          bolsa_familia_pc: bolsa_familia_pc
+          bpc_pc: bpc_pc
+      name: "CGU — Portal da Transparência (derivado)"
+      url: "https://portaldatransparencia.gov.br/beneficios"
+      license: "Dados públicos (LAI)"
+      citation: "Cálculo próprio a partir dos benefícios ao cidadão do Portal da Transparência (CGU) e população estimada (IBGE)."
+    transform: null
+    ref_year_policy: nearest_before_election
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  # ==========================================================================
+  # N1 — EDUCAÇÃO E SAÚDE (IBGE CIDADES)
+  # ==========================================================================
+  - code: ideb_initial
+    label: "IDEB anos iniciais (pública)"
+    description: "Índice de Desenvolvimento da Educação Básica (IDEB) para os anos iniciais do ensino fundamental na rede pública."
+    theme: education
+    tier: 1
+    unit: "índice 0-10"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 10.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60041
+        period: "last"
+      name: "INEP / IBGE Cidades — IDEB"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "INEP. Índice de Desenvolvimento da Educação Básica (via IBGE Cidades)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.93
+    caveat: null
+    verified: true
+
+  - code: ideb_final
+    label: "IDEB anos finais (pública)"
+    description: "Índice de Desenvolvimento da Educação Básica (IDEB) para os anos finais do ensino fundamental na rede pública."
+    theme: education
+    tier: 1
+    unit: "índice 0-10"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 10.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60042
+        period: "last"
+      name: "INEP / IBGE Cidades — IDEB"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "INEP. Índice de Desenvolvimento da Educação Básica (via IBGE Cidades)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.93
+    caveat: null
+    verified: true
+
+  - code: schooling_6_14
+    label: "Escolarização de 6 a 14 anos"
+    description: "Taxa de escolarização das pessoas de 6 a 14 anos de idade residentes no município (Censo 2022)."
+    theme: education
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60045
+        period: "2022"
+      name: "IBGE — Censo Demográfico 2022 (via IBGE Cidades)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Educação."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: infant_mortality
+    label: "Mortalidade infantil"
+    description: "Óbitos de menores de 1 ano de idade por mil nascidos vivos residentes no município (SIM/SINASC)."
+    theme: health
+    tier: 1
+    unit: "por mil nascidos vivos"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 200.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60033
+        period: "last"
+      name: "Ministério da Saúde / IBGE Cidades — SIM e SINASC"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Ministério da Saúde / DATASUS. Sistema de Informações sobre Mortalidade (via IBGE Cidades)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.90
+    caveat: "Taxa sujeita a forte oscilação anual em municípios de pequeno porte devido ao baixo número absoluto de nascimentos."
+    verified: true
+
+  - code: diarrhea_hospitalizations
+    label: "Internações por diarreia (SUS)"
+    description: "Internações hospitalares no SUS por diarreia e gastroenterite de origem infecciosa presumível por 100 mil habitantes."
+    theme: health
+    tier: 1
+    unit: "por 100 mil hab."
+    value_type: continuous
+    higher_is: worse
+    scale_hint: log
+    valid_range: [0.0, 25000.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60032
+        period: "2024"
+      name: "Ministério da Saúde / IBGE Cidades — SIH/SUS"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Ministério da Saúde / DATASUS. Sistema de Informações Hospitalares do SUS (via IBGE Cidades)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.90
+    caveat: null
+    verified: true
+
+  # ==========================================================================
+  # N1 — SOCIAL E DEMOGRAFIA (CENSO 2022)
+  # ==========================================================================
+  - code: evangelical_pct
+    label: "Evangélicos"
+    description: "Percentual da população residente de 10 anos ou mais de idade de religião evangélica (Censo 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9537
+        variable: 1000140
+        period: "2022"
+        classifications:
+          c133: "95277"
+          c2: "6794"
+          c58: "95253"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 292523
+      name: "IBGE — Censo Demográfico 2022 (Religião)"
+      url: "https://sidra.ibge.gov.br/tabela/9537"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Religiões."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: "Universo: pessoas residentes de 10 anos ou mais de idade."
+    verified: true
+
+  - code: catholic_pct
+    label: "Católicos"
+    description: "Percentual da população residente de 10 anos ou mais de idade de religião Católica Apostólica Romana (Censo 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9537
+        variable: 1000140
+        period: "2022"
+        classifications:
+          c133: "95263"
+          c2: "6794"
+          c58: "95253"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 292502
+      name: "IBGE — Censo Demográfico 2022 (Religião)"
+      url: "https://sidra.ibge.gov.br/tabela/9537"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Religiões."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: "Universo: pessoas residentes de 10 anos ou mais de idade."
+    verified: true
+
+  - code: no_religion_pct
+    label: "Sem religião"
+    description: "Percentual da população residente de 10 anos ou mais de idade sem religião declarada (Censo 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9537
+        variable: 1000140
+        period: "2022"
+        classifications:
+          c133: "2836"
+          c2: "6794"
+          c58: "95253"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 292628
+      name: "IBGE — Censo Demográfico 2022 (Religião)"
+      url: "https://sidra.ibge.gov.br/tabela/9537"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Religiões."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.99
+    caveat: "Universo: pessoas residentes de 10 anos ou mais de idade."
+    verified: true
+
+  - code: black_brown_pct
+    label: "Pretos e pardos"
+    description: "Percentual da população residente autodeclarada preta ou parda no Censo Demográfico de 2022."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9605
+        variable: 1000093
+        period: "2022"
+        classifications:
+          c86: "2777,2779"
+      name: "IBGE — Censo Demográfico 2022 (Cor ou Raça)"
+      url: "https://sidra.ibge.gov.br/tabela/9605"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: População por cor ou raça."
+    transform:
+      agg: "sum"
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: elderly_pct
+    label: "População com 60+ anos"
+    description: "Percentual da população residente com 60 anos ou mais de idade no Censo Demográfico de 2022."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 60.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9514
+        variable: 1000093
+        period: "2022"
+        classifications:
+          c2: "6794"
+          c286: "113635"
+          c287: "93095,93096,93097,93098,49108,49109,60040,60041,6653"
+      name: "IBGE — Censo Demográfico 2022 (Pirâmide Etária)"
+      url: "https://sidra.ibge.gov.br/tabela/9514"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: População por idade e sexo."
+    transform:
+      agg: "sum"
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: literacy_rate
+    label: "Taxa de alfabetização (15+)"
+    description: "Percentual das pessoas residentes de 15 anos ou mais de idade alfabetizadas (Censo 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [40.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9543
+        variable: 2513
+        period: "2022"
+        classifications:
+          c2: "6794"
+          c86: "95251"
+          c287: "100362"
+      name: "IBGE — Censo Demográfico 2022 (Alfabetização)"
+      url: "https://sidra.ibge.gov.br/tabela/9543"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Alfabetização."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: urban_pop_pct
+    label: "População urbana"
+    description: "Percentual da população residente em situação de domicílio urbana no Censo Demográfico de 2022."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9923
+        variable: 1000093
+        period: "2022"
+        classifications:
+          c1: "1"
+      name: "IBGE — Censo Demográfico 2022 (Situação do Domicílio)"
+      url: "https://sidra.ibge.gov.br/tabela/9923"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: População por situação do domicílio."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.999
+    caveat: null
+    verified: true
+
+  - code: indigenous_pct
+    label: "População indígena"
+    description: "Percentual da população residente indígena no município (Censo Demográfico de 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 9605
+        variable: 1000093
+        period: "2022"
+        classifications:
+          c86: "2780"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 295432
+          divide_by: population
+      name: "IBGE — Censo Demográfico 2022 (Indígenas)"
+      url: "https://sidra.ibge.gov.br/tabela/9605"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: População indígena."
+    transform: null
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: favela_households_pct
+    label: "Domicílios em favelas"
+    description: "Percentual dos domicílios particulares permanentes ocupados localizados em Favelas e Comunidades Urbanas (Censo 2022)."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: sidra
+      params:
+        table: 10172
+        variable: 13548
+        period: "2022"
+        classifications:
+          c125: "2932"
+          c14: "200"
+        denominator:
+          table: 9922
+          variable: 381
+          period: "2022"
+          classifications:
+            c1: "6795"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 328262
+      name: "IBGE — Censo Demográfico 2022 (Favelas e Comunidades Urbanas)"
+      url: "https://sidra.ibge.gov.br/tabela/10172"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Favelas e Comunidades Urbanas."
+    transform:
+      multiply: 100
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.11
+    caveat: "Apenas 656 municípios brasileiros possuem Favelas e Comunidades Urbanas identificadas pelo IBGE no Censo 2022; nos demais municípios o indicador permanece ausente (NULL)."
+    verified: true
+
+  - code: interstate_migrants_pct
+    label: "Migrantes de outra UF (5 anos)"
+    description: "Percentual da população residente que morava em outra Unidade da Federação na data de referência de 5 anos antes do Censo 2022."
+    theme: social
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 50.0]
+    source:
+      adapter: sidra
+      params:
+        table: 10159
+        variable: 13339
+        period: "2022"
+        classifications:
+          c2083: "77808"
+        fallback_pesquisas:
+          survey: 10105
+          indicator_id: 293096
+      name: "IBGE — Censo Demográfico 2022 (Migração)"
+      url: "https://sidra.ibge.gov.br/tabela/10159"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Migração e deslocamento."
+    transform:
+      multiply: 100
+      per_capita:
+        population: population
+        same_year: true
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  # ==========================================================================
+  # N1 — INFRAESTRUTURA URBANA (IBGE CIDADES)
+  # ==========================================================================
+  - code: sewage_adequate_pct
+    label: "Esgotamento sanitário adequado"
+    description: "Percentual de domicílios particulares permanentes ocupados com esgotamento sanitário por rede geral, rede pluvial ou fossa séptica ligada à rede (Censo 2022)."
+    theme: infrastructure
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60030
+        period: "2022"
+      name: "IBGE — Censo Demográfico 2022 (via IBGE Cidades)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Características dos domicílios."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: urban_trees_pct
+    label: "Arborização de vias públicas"
+    description: "Percentual de domicílios urbanos em faces de quadra com arborização (Censo 2022 — Características Urbanísticas do Entorno dos Domicílios)."
+    theme: infrastructure
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60029
+        period: "2022"
+      name: "IBGE — Censo Demográfico 2022 (Entorno dos Domicílios)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Censo Demográfico 2022: Características urbanísticas do entorno dos domicílios."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: "fixed:2022"
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  - code: urbanized_roads_pct
+    label: "Urbanização de vias públicas"
+    description: "Percentual de domicílios urbanos em vias públicas com bueiro/boca de lobo, pavimentação, calçada e meio-fio."
+    theme: infrastructure
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60031
+        period: "last"
+      name: "IBGE — Censo Demográfico (via IBGE Cidades)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Características urbanísticas do entorno dos domicílios."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: "No Panorama IBGE Cidades (id 60031), a série consolidada disponível refere-se ao Censo 2010."
+    verified: true
+
+  - code: pop_at_risk_pct
+    label: "População em áreas de risco"
+    description: "Percentual da população municipal exposta em áreas de risco de deslizamentos, enxurradas e inundações (IBGE/CEMADEN)."
+    theme: infrastructure
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: log
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 93371
+        period: "2010"
+      name: "IBGE / CEMADEN — População em Áreas de Risco"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE; CEMADEN. População em áreas de risco no Brasil."
+    transform:
+      sentinel_min: 99999999999990
+      multiply: 100
+      per_capita:
+        population: population
+        same_year: false
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.14
+    caveat: "Estudo IBGE/CEMADEN abrange apenas os 872 municípios monitorados para desastres geo-hidrológicos (demais retornam código sentinela de não monitorado e ficam NULL)."
+    verified: true
+
+  - code: urban_hierarchy
+    label: "Hierarquia urbana (REGIC)"
+    description: "Classificação do município na rede urbana brasileira segundo o estudo Regiões de Influência das Cidades (REGIC 2018)."
+    theme: infrastructure
+    tier: 1
+    unit: "categoria"
+    value_type: categorical
+    higher_is: neutral
+    scale_hint: categorical
+    valid_range: null
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 87529
+        period: "2018"
+      name: "IBGE — Regiões de Influência das Cidades (REGIC 2018)"
+      url: "https://www.ibge.gov.br/geociencias/organizacao-do-territorio/redes-e-fluxos-geograficos/15798-regioes-de-influencia-das-cidades.html"
+      license: "Dados públicos (LAI)"
+      citation: "IBGE. Regiões de Influência das Cidades — REGIC 2018."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: "fixed:2018"
+    min_coverage: 0.99
+    caveat: null
+    verified: true
+
+  # ==========================================================================
+  # N1 — GESTÃO FISCAL (SICONFI / TESOURO NACIONAL)
+  # ==========================================================================
+  - code: current_transfers_pct
+    label: "Dependência de transferências"
+    description: "Percentual das receitas correntes brutas realizadas do município oriundo de transferências correntes externas."
+    theme: fiscal
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 200.0]
+    source:
+      adapter: ibge_pesquisas
+      params:
+        survey: 10058
+        indicator_id: 60048
+        period: "2024"
+        fallback_siconfi:
+          anexo: "DCA-Anexo I-C"
+          coluna: "Receitas Brutas Realizadas"
+          numerator_cod_conta: "RO1.7.0.0.00.0.0"
+          denominator_cod_conta: "RO1.0.0.0.00.0.0"
+      name: "Tesouro Nacional — SICONFI (via IBGE Cidades)"
+      url: "https://cidades.ibge.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Finanças do Brasil (FINBRA/DCA)."
+    transform:
+      sentinel_min: 99999999999990
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: fiscal_autonomy_pct
+    label: "Autonomia fiscal"
+    description: "Participação da arrecadação tributária própria (Impostos, Taxas e Contribuições de Melhoria) na Receita Corrente Bruta Realizada (DCA Anexo I-C)."
+    theme: fiscal
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: siconfi
+      params:
+        anexo: "DCA-Anexo I-C"
+        coluna: "Receitas Brutas Realizadas"
+        numerator_cod_conta: "RO1.1.0.0.00.0.0"
+        denominator_cod_conta: "RO1.0.0.0.00.0.0"
+        period: "last"
+      name: "Tesouro Nacional — SICONFI (DCA Anexo I-C)"
+      url: "https://siconfi.tesouro.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Declaração de Contas Anuais (DCA Anexo I-C)."
+    transform:
+      multiply: 100
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: "Municípios que não homologaram a DCA no exercício figuram como não declarados (NULL)."
+    verified: true
+
+  - code: fpm_dependency_pct
+    label: "Dependência do FPM"
+    description: "Participação da Cota-Parte do Fundo de Participação dos Municípios (FPM) na Receita Corrente Bruta Realizada (DCA Anexo I-C)."
+    theme: fiscal
+    tier: 1
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: siconfi
+      params:
+        anexo: "DCA-Anexo I-C"
+        coluna: "Receitas Brutas Realizadas"
+        numerator_cod_conta: "RO1.7.1.1.51.0.0"
+        denominator_cod_conta: "RO1.0.0.0.00.0.0"
+        period: "last"
+      name: "Tesouro Nacional — SICONFI (DCA Anexo I-C)"
+      url: "https://siconfi.tesouro.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Declaração de Contas Anuais (DCA Anexo I-C)."
+    transform:
+      multiply: 100
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: revenue_pc
+    label: "Receita corrente per capita"
+    description: "Receita Corrente Bruta Realizada do município (DCA Anexo I-C) dividida pela população estimada pelo IBGE."
+    theme: fiscal
+    tier: 1
+    unit: "R$"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [500.0, 100000.0]
+    source:
+      adapter: siconfi
+      params:
+        anexo: "DCA-Anexo I-C"
+        coluna: "Receitas Brutas Realizadas"
+        cod_conta: "RO1.0.0.0.00.0.0"
+        period: "last"
+      name: "Tesouro Nacional — SICONFI (DCA Anexo I-C)"
+      url: "https://siconfi.tesouro.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Declaração de Contas Anuais (DCA Anexo I-C)."
+    transform:
+      per_capita:
+        population: population_estimate
+        same_year: true
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: health_spending_pc
+    label: "Gasto em saúde per capita"
+    description: "Despesas empenhadas na função 10 (Saúde) no DCA Anexo I-E divididas pela população estimada do município."
+    theme: fiscal
+    tier: 1
+    unit: "R$"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [50.0, 30000.0]
+    source:
+      adapter: siconfi
+      params:
+        anexo: "DCA-Anexo I-E"
+        coluna: "Despesas Empenhadas"
+        cod_conta: "TotalDespesas"
+        conta_prefix: "10 - Saúde"
+        period: "last"
+      name: "Tesouro Nacional — SICONFI (DCA Anexo I-E)"
+      url: "https://siconfi.tesouro.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Declaração de Contas Anuais (DCA Anexo I-E)."
+    transform:
+      per_capita:
+        population: population_estimate
+        same_year: true
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: education_spending_pc
+    label: "Gasto em educação per capita"
+    description: "Despesas empenhadas na função 12 (Educação) no DCA Anexo I-E divididas pela população estimada do município."
+    theme: fiscal
+    tier: 1
+    unit: "R$"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: log
+    valid_range: [50.0, 30000.0]
+    source:
+      adapter: siconfi
+      params:
+        anexo: "DCA-Anexo I-E"
+        coluna: "Despesas Empenhadas"
+        cod_conta: "TotalDespesas"
+        conta_prefix: "12 - Educação"
+        period: "last"
+      name: "Tesouro Nacional — SICONFI (DCA Anexo I-E)"
+      url: "https://siconfi.tesouro.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "Secretaria do Tesouro Nacional. SICONFI — Declaração de Contas Anuais (DCA Anexo I-E)."
+    transform:
+      per_capita:
+        population: population_estimate
+        same_year: true
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: true
+
+  - code: capag_rating
+    label: "Nota CAPAG"
+    description: "Classificação da Capacidade de Pagamento (CAPAG) apurada pela Secretaria do Tesouro Nacional para acesso a garantias da União."
+    theme: fiscal
+    tier: 1
+    unit: "ordinal A>B>C>D"
+    value_type: ordinal
+    higher_is: better
+    scale_hint: ordinal
+    valid_range: null
+    source:
+      adapter: ckan
+      params:
+        base_url: "https://www.tesourotransparente.gov.br/ckan/api/3/action/package_show"
+        package_id: "capag-municipios"
+        sheet_name: "Prévia da CAPAG"
+        fallback_sheet_name: "CAPAG Ano Base 2025"
+        header_row: 2
+        ibge_column: "Código Município Completo"
+        value_column: "CAPAG"
+        allowed_values: ["A+", "A", "B+", "B", "C", "D"]
+        missing_tokens: ["n.d.", "n.e.", "#N/A", "-"]
+      name: "Tesouro Transparente — CAPAG Municípios"
+      url: "https://www.tesourotransparente.gov.br/ckan/dataset/capag-municipios"
+      license: "Dados públicos (CC-BY 4.0 / LAI)"
+      citation: "Secretaria do Tesouro Nacional. Capacidade de Pagamento (CAPAG) dos Municípios."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: "Municípios com dados contábeis pendentes ('n.d.') ou não elegíveis ('n.e.') são registrados como ausentes (NULL) com o respectivo motivo."
+    verified: true
+
+  # ==========================================================================
+  # N2 — ÍNDICES COMPOSTOS DE MERCADO E ACADEMIA (MANUAL_FILE)
+  # ==========================================================================
+  - code: ifdm
+    label: "IFDM Geral (Firjan)"
+    description: "Índice Firjan de Desenvolvimento Municipal — síntese de Emprego & Renda, Educação e Saúde (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifdm_2025_base_2023.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifdm"
+      name: "Firjan — IFDM"
+      url: "https://www.firjan.com.br/ifdm/downloads/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Desenvolvimento Municipal (IFDM)."
+    transform: null
+    ref_year_policy: "fixed:2023"
+    min_coverage: 0.95
+    caveat: null
+    verified: false
+
+  - code: ifdm_employment_income
+    label: "IFDM Emprego e Renda"
+    description: "Dimensão Emprego e Renda do Índice Firjan de Desenvolvimento Municipal (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifdm_2025_base_2023.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifdm_employment_income"
+      name: "Firjan — IFDM"
+      url: "https://www.firjan.com.br/ifdm/downloads/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Desenvolvimento Municipal (IFDM) — Emprego e Renda."
+    transform: null
+    ref_year_policy: "fixed:2023"
+    min_coverage: 0.95
+    caveat: null
+    verified: false
+
+  - code: ifdm_education
+    label: "IFDM Educação"
+    description: "Dimensão Educação do Índice Firjan de Desenvolvimento Municipal (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifdm_2025_base_2023.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifdm_education"
+      name: "Firjan — IFDM"
+      url: "https://www.firjan.com.br/ifdm/downloads/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Desenvolvimento Municipal (IFDM) — Educação."
+    transform: null
+    ref_year_policy: "fixed:2023"
+    min_coverage: 0.95
+    caveat: null
+    verified: false
+
+  - code: ifdm_health
+    label: "IFDM Saúde"
+    description: "Dimensão Saúde do Índice Firjan de Desenvolvimento Municipal (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifdm_2025_base_2023.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifdm_health"
+      name: "Firjan — IFDM"
+      url: "https://www.firjan.com.br/ifdm/downloads/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Desenvolvimento Municipal (IFDM) — Saúde."
+    transform: null
+    ref_year_policy: "fixed:2023"
+    min_coverage: 0.95
+    caveat: null
+    verified: false
+
+  - code: ifgf
+    label: "IFGF Geral (Firjan)"
+    description: "Índice Firjan de Gestão Fiscal — síntese de Autonomia, Gastos com Pessoal, Liquidez e Investimentos (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifgf_2025.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifgf"
+      name: "Firjan — IFGF"
+      url: "https://www.firjan.com.br/ifgf/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Gestão Fiscal (IFGF)."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: "Abrange cerca de 92% dos municípios brasileiros (exclui prefeituras que não declararam contas no SICONFI no prazo)."
+    verified: false
+
+  - code: ifgf_autonomy
+    label: "IFGF Autonomia"
+    description: "Dimensão Autonomia do Índice Firjan de Gestão Fiscal (capacidade de financiar a estrutura administrativa com receitas locais)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifgf_2025.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifgf_autonomy"
+      name: "Firjan — IFGF"
+      url: "https://www.firjan.com.br/ifgf/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Gestão Fiscal (IFGF) — Autonomia."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: false
+
+  - code: ifgf_personnel
+    label: "IFGF Gastos com Pessoal"
+    description: "Dimensão Gastos com Pessoal do Índice Firjan de Gestão Fiscal (menor comprometimento da receita líquida = maior nota)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifgf_2025.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifgf_personnel"
+      name: "Firjan — IFGF"
+      url: "https://www.firjan.com.br/ifgf/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Gestão Fiscal (IFGF) — Gastos com Pessoal."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: false
+
+  - code: ifgf_liquidity
+    label: "IFGF Liquidez"
+    description: "Dimensão Liquidez do Índice Firjan de Gestão Fiscal (suficiência de caixa para cobrir restos a pagar)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifgf_2025.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifgf_liquidity"
+      name: "Firjan — IFGF"
+      url: "https://www.firjan.com.br/ifgf/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Gestão Fiscal (IFGF) — Liquidez."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: false
+
+  - code: ifgf_investment
+    label: "IFGF Investimentos"
+    description: "Dimensão Investimentos do Índice Firjan de Gestão Fiscal (parcela da receita total destinada a investimentos públicos)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ifgf_2025.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ifgf_investment"
+      name: "Firjan — IFGF"
+      url: "https://www.firjan.com.br/ifgf/"
+      license: "Uso público mediante citação da fonte (Firjan)"
+      citation: "FIRJAN. Índice Firjan de Gestão Fiscal (IFGF) — Investimentos."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.85
+    caveat: null
+    verified: false
+
+  - code: ips
+    label: "Índice de Progresso Social"
+    description: "Índice de Progresso Social (IPS Brasil) — avaliação multidimensional de desempenho socioambiental dos municípios (0 a 100)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-100"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ips_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ips"
+      name: "IPS Brasil (Imazon / Social Progress Imperative)"
+      url: "https://ipsbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (IPS Brasil)"
+      citation: "IPS Brasil. Índice de Progresso Social dos Municípios Brasileiros."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: "Edições anuais do IPS Brasil não são diretamente comparáveis em série histórica devido a atualizações metodológicas das variáveis componentes."
+    verified: false
+
+  - code: ips_basic_needs
+    label: "IPS Necessidades Humanas"
+    description: "Dimensão Necessidades Humanas Básicas do Índice de Progresso Social (nutrição, saúde básica, água/saneamento, moradia e segurança)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-100"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ips_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ips_basic_needs"
+      name: "IPS Brasil"
+      url: "https://ipsbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (IPS Brasil)"
+      citation: "IPS Brasil. Índice de Progresso Social — Necessidades Humanas Básicas."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: null
+    verified: false
+
+  - code: ips_wellbeing
+    label: "IPS Fundamentos do Bem-Estar"
+    description: "Dimensão Fundamentos do Bem-Estar do Índice de Progresso Social (conhecimento básico, informação, saúde e qualidade ambiental)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-100"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ips_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ips_wellbeing"
+      name: "IPS Brasil"
+      url: "https://ipsbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (IPS Brasil)"
+      citation: "IPS Brasil. Índice de Progresso Social — Fundamentos do Bem-Estar."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: null
+    verified: false
+
+  - code: ips_opportunities
+    label: "IPS Oportunidades"
+    description: "Dimensão Oportunidades do Índice de Progresso Social (direitos individuais, liberdades, inclusão social e acesso ao ensino superior)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-100"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 100.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ips_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ips_opportunities"
+      name: "IPS Brasil"
+      url: "https://ipsbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (IPS Brasil)"
+      citation: "IPS Brasil. Índice de Progresso Social — Oportunidades."
+    transform: null
+    ref_year_policy: latest
+    min_coverage: 0.99
+    caveat: null
+    verified: false
+
+  - code: ivs
+    label: "Índice Vulnerabilidade Social"
+    description: "Índice de Vulnerabilidade Social (IVS/IPEA) — síntese de exclusão e vulnerabilidade social (0 a 1; maior = mais vulnerável)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ivs_ipea.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ivs"
+      name: "IPEA — Atlas da Vulnerabilidade Social"
+      url: "https://ivs.ipea.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IPEA. Atlas da Vulnerabilidade Social nos Municípios Brasileiros."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo: o IVS municipal tem como base o Censo Demográfico de 2010."
+    verified: false
+
+  - code: ivs_infra
+    label: "IVS Infraestrutura Urbana"
+    description: "Dimensão Infraestrutura Urbana do Índice de Vulnerabilidade Social (saneamento, coleta de lixo e tempo de deslocamento)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ivs_ipea.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ivs_infra"
+      name: "IPEA — Atlas da Vulnerabilidade Social"
+      url: "https://ivs.ipea.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IPEA. Atlas da Vulnerabilidade Social — Infraestrutura Urbana."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: ivs_human_capital
+    label: "IVS Capital Humano"
+    description: "Dimensão Capital Humano do Índice de Vulnerabilidade Social (mortalidade infantil, escolaridade e frequência escolar)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ivs_ipea.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ivs_human_capital"
+      name: "IPEA — Atlas da Vulnerabilidade Social"
+      url: "https://ivs.ipea.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IPEA. Atlas da Vulnerabilidade Social — Capital Humano."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: ivs_income_work
+    label: "IVS Renda e Trabalho"
+    description: "Dimensão Renda e Trabalho do Índice de Vulnerabilidade Social (insuficiência de renda, desocupação e informalidade)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/ivs_ipea.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "ivs_income_work"
+      name: "IPEA — Atlas da Vulnerabilidade Social"
+      url: "https://ivs.ipea.gov.br/"
+      license: "Dados públicos (LAI)"
+      citation: "IPEA. Atlas da Vulnerabilidade Social — Renda e Trabalho."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: idhm
+    label: "IDHM Geral (Atlas Brasil)"
+    description: "Índice de Desenvolvimento Humano Municipal — média geométrica das dimensões Renda, Longevidade e Educação (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/idhm_atlas_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "idhm"
+      name: "Atlas do Desenvolvimento Humano no Brasil (PNUD / IPEA / FJP)"
+      url: "https://www.atlasbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (Atlas Brasil)"
+      citation: "PNUD; IPEA; FJP. Atlas do Desenvolvimento Humano no Brasil."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo: o IDHM municipal oficial publicado pelo Atlas Brasil refere-se ao Censo 2010."
+    verified: false
+
+  - code: idhm_income
+    label: "IDHM Renda"
+    description: "Dimensão Renda do Índice de Desenvolvimento Humano Municipal (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/idhm_atlas_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "idhm_income"
+      name: "Atlas do Desenvolvimento Humano no Brasil"
+      url: "https://www.atlasbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (Atlas Brasil)"
+      citation: "PNUD; IPEA; FJP. Atlas do Desenvolvimento Humano no Brasil — IDHM Renda."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: idhm_longevity
+    label: "IDHM Longevidade"
+    description: "Dimensão Longevidade do Índice de Desenvolvimento Humano Municipal (esperança de vida ao nascer normalizada de 0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/idhm_atlas_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "idhm_longevity"
+      name: "Atlas do Desenvolvimento Humano no Brasil"
+      url: "https://www.atlasbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (Atlas Brasil)"
+      citation: "PNUD; IPEA; FJP. Atlas do Desenvolvimento Humano no Brasil — IDHM Longevidade."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: idhm_education
+    label: "IDHM Educação"
+    description: "Dimensão Educação do Índice de Desenvolvimento Humano Municipal (escolaridade da população adulta e fluxo escolar jovem, 0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: better
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/idhm_atlas_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "idhm_education"
+      name: "Atlas do Desenvolvimento Humano no Brasil"
+      url: "https://www.atlasbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (Atlas Brasil)"
+      citation: "PNUD; IPEA; FJP. Atlas do Desenvolvimento Humano no Brasil — IDHM Educação."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo (base Censo 2010)."
+    verified: false
+
+  - code: gini
+    label: "Índice de Gini"
+    description: "Medida de desigualdade na distribuição de renda domiciliar per capita municipal (0 a 1)."
+    theme: composite
+    tier: 2
+    unit: "índice 0-1"
+    value_type: continuous
+    higher_is: worse
+    scale_hint: linear
+    valid_range: [0.0, 1.0]
+    source:
+      adapter: manual_file
+      params:
+        path: "data/manual/idhm_atlas_brasil.xlsx"
+        sha256: null
+        ibge_column: "cd_ibge"
+        value_column: "gini"
+      name: "Atlas do Desenvolvimento Humano no Brasil (PNUD / IPEA / FJP)"
+      url: "https://www.atlasbrasil.org.br/"
+      license: "Uso público mediante citação da fonte (Atlas Brasil)"
+      citation: "PNUD; IPEA; FJP. Atlas do Desenvolvimento Humano no Brasil — Índice de Gini."
+    transform: null
+    ref_year_policy: "fixed:2010"
+    min_coverage: 0.99
+    caveat: "Dado antigo: o Índice de Gini municipal oficial do Atlas Brasil refere-se ao Censo 2010."
+    verified: false
+
+  # ==========================================================================
+  # N2 — PERFIL ELEITORAL (TSE 2026)
+  # ==========================================================================
+  - code: turnout_pct
+    label: "Comparecimento eleitoral"
+    description: "Percentual de eleitores aptos que compareceram às urnas no 1º turno da Eleição Geral de 2026 (Presidente)."
+    theme: electoral
+    tier: 2
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [40.0, 100.0]
+    source:
+      adapter: derived
+      params:
+        table: "election_summary"
+        office: "president"
+        round: 1
+        expr: "turnout / eligible_voters * 100"
+      name: "TSE — Detalhe da Votação por Município e Zona (2026)"
+      url: "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2026.zip"
+      license: "Dados públicos (TSE Dados Abertos)"
+      citation: "TSE. Repositório de Dados Eleitorais — Eleições 2026."
+    transform: null
+    ref_year_policy: "fixed:2026"
+    min_coverage: 1.0
+    caveat: null
+    verified: true
+
+  - code: blank_null_pct
+    label: "Votos brancos e nulos"
+    description: "Percentual de votos em branco e nulos sobre o total de votos registrados no 1º turno de 2026 (Presidente)."
+    theme: electoral
+    tier: 2
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 50.0]
+    source:
+      adapter: derived
+      params:
+        table: "election_summary"
+        office: "president"
+        round: 1
+        expr: "(blank_votes + null_votes) / (valid_votes + blank_votes + null_votes) * 100"
+      name: "TSE — Detalhe da Votação por Município e Zona (2026)"
+      url: "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2026.zip"
+      license: "Dados públicos (TSE Dados Abertos)"
+      citation: "TSE. Repositório de Dados Eleitorais — Eleições 2026."
+    transform: null
+    ref_year_policy: "fixed:2026"
+    min_coverage: 1.0
+    caveat: null
+    verified: true
+
+  - code: electorate_higher_ed_pct
+    label: "Eleitores com ensino superior"
+    description: "Percentual do eleitorado apto do município com ensino superior completo no cadastro eleitoral de 2026."
+    theme: electoral
+    tier: 2
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 60.0]
+    source:
+      adapter: tse
+      params:
+        dataset: "perfil_eleitorado_2026"
+        file_pattern: "perfil_eleitorado_2026_BRASIL.csv"
+        filter_column: "CD_GRAU_ESCOLARIDADE"
+        filter_values: [8]
+        weight_column: "QT_ELEITORES"
+      name: "TSE — Perfil do Eleitorado 2026"
+      url: "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2026.zip"
+      license: "Dados públicos (TSE Dados Abertos)"
+      citation: "TSE. Repositório de Dados Eleitorais — Perfil do Eleitorado 2026."
+    transform:
+      multiply: 100
+    ref_year_policy: "fixed:2026"
+    min_coverage: 1.0
+    caveat: "Escolaridade autodeclarada no momento do alistamento ou revisão eleitoral (subestima diplomas obtidos após o último recadastramento)."
+    verified: true
+
+  - code: electorate_60plus_pct
+    label: "Eleitores com 60+ anos"
+    description: "Percentual do eleitorado apto do município com 60 anos ou mais de idade no cadastro eleitoral de 2026."
+    theme: electoral
+    tier: 2
+    unit: "%"
+    value_type: continuous
+    higher_is: neutral
+    scale_hint: linear
+    valid_range: [0.0, 65.0]
+    source:
+      adapter: tse
+      params:
+        dataset: "perfil_eleitorado_2026"
+        file_pattern: "perfil_eleitorado_2026_BRASIL.csv"
+        filter_column: "CD_FAIXA_ETARIA"
+        filter_values: [6064, 6569, 7074, 7579, 8084, 8589, 9094, 9599, 9999]
+        weight_column: "QT_ELEITORES"
+      name: "TSE — Perfil do Eleitorado 2026"
+      url: "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2026.zip"
+      license: "Dados públicos (TSE Dados Abertos)"
+      citation: "TSE. Repositório de Dados Eleitorais — Perfil do Eleitorado 2026."
+    transform:
+      multiply: 100
+    ref_year_policy: "fixed:2026"
+    min_coverage: 1.0
+    caveat: null
+    verified: true
