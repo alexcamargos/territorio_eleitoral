@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "territorio-eleitoral"
+version = "0.1.0"
+description = "Storytelling de dados eleitorais (Eleição Geral 2026) cruzados com indicadores socioeconômicos e fiscais dos 5.571 municípios brasileiros."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.14.0",
+    "fastapi>=0.115.0",
+    "geoalchemy2>=0.15.0",
+    "geopandas>=1.0.0",
+    "httpx>=0.27.0",
+    "numpy>=2.0.0",
+    "openpyxl>=3.1.5",
+    "orjson>=3.10.0",
+    "pandas>=2.2.0",
+    "pandera>=0.20.0",
+    "psycopg[binary]>=3.2.0",
+    "pyarrow>=17.0.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "pyogrio>=0.9.0",
+    "pyyaml>=6.0.2",
+    "scipy>=1.14.0",
+    "shapely>=2.0.6",
+    "sqlalchemy>=2.0.35",
+    "tenacity>=9.0.0",
+    "typer>=0.12.5",
+    "uvicorn[standard]>=0.31.0",
+]
+
+[project.scripts]
+territorio = "territorio.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "respx>=0.21.1",
+    "ruff>=0.7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/territorio"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "D",    # pydocstyle
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "PT",   # flake8-pytest-style
+    "RUF",  # ruff-specific rules
+    "TID",  # flake8-tidy-imports
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"unittest".msg = "Use pytest functions and fixtures exclusively; unittest is forbidden."
+"unittest.mock".msg = "Use the 'mocker' fixture from pytest-mock instead of unittest.mock."
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra -q"
+markers = [
+    "integration: tests requiring a live PostgreSQL + PostGIS database instance",
+]
