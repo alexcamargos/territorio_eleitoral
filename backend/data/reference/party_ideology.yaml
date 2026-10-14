@@ -1,0 +1,543 @@
+# =============================================================================
+# Classificação Ideológica Partidária — Fonte da Verdade (Território Eleitoral)
+# =============================================================================
+# Referência metodológica: docs/07-metodologia.md (§2) e docs/06-modelo-de-dados.md
+#
+# Regras de negócio inegociáveis:
+# 1. Todo SG_PARTIDO presente nos arquivos de votação do TSE com total_votes > 0
+#    DEVE possuir registro vigente (valid_from <= year e (valid_to is null ou year <= valid_to)).
+#    Partido sem classificação vigente faz o pipeline falhar com UnclassifiedPartyError.
+# 2. A escala contínua vai de 0.00 (extrema-esquerda) a 10.00 (extrema-direita):
+#      - left:   0.00 <= score <  4.00 (Esquerda e centro-esquerda)
+#      - center: 4.00 <= score <= 6.00 (Centro ideológico)
+#      - right:  6.00 <  score <= 10.00 (Centro-direita e direita)
+# 3. Métodos de atribuição permitidos (coluna party_ideology.method):
+#      - survey:  nota direta do expert survey acadêmico de referência (ou partido renomeado)
+#      - derived: fusão/incorporação calculada pela média ponderada pela bancada de
+#                 deputados federais eleitos na eleição imediatamente anterior à fusão
+#      - manual:  partido novo pós-survey sem antecessor parlamentar, classificado a
+#                 partir do estatuto/programa registrado no TSE
+# =============================================================================
+
+schema_version: 1
+
+source_citation: >-
+  Bolognesi, B., Ribeiro, E., & Codato, A. (2023). Uma Nova Classificação
+  Ideológica dos Partidos Políticos Brasileiros. Dados — Revista de Ciências
+  Sociais, Rio de Janeiro, v. 66, n. 2, e20210164.
+  https://doi.org/10.1590/dados.2023.66.2.303
+
+thresholds:
+  scale_min: 0.00
+  scale_max: 10.00
+  left_max_exclusive: 4.00
+  right_min_exclusive: 6.00
+
+blocs:
+  left:
+    label_pt: "Esquerda"
+    description: "Esquerda e centro-esquerda (0,00 <= score < 4,00)"
+  center:
+    label_pt: "Centro"
+    description: "Centro ideológico (4,00 <= score <= 6,00)"
+  right:
+    label_pt: "Direita"
+    description: "Centro-direita e direita (6,00 < score <= 10,00)"
+
+# Mapa de normalização de siglas históricas ou grafias alternativas do TSE
+# para o party_code canônico (aplicado após upper().strip() e remoção de acentos).
+aliases:
+  "PC DO B": "PCDOB"
+  "PCdoB": "PCDOB"
+  "UNIÃO": "UNIAO"
+  "UNIAO BRASIL": "UNIAO"
+  "MISSÃO": "MISSAO"
+  "PARTIDO MISSAO": "MISSAO"
+  "PMDB": "MDB"
+  "PPS": "CIDADANIA"
+  "PR": "PL"
+  "PRB": "REPUBLICANOS"
+  "PTN": "PODE"
+  "PODEMOS": "PODE"
+  "PTC": "AGIR"
+  "PMN": "MOBILIZA"
+  "PSDC": "DC"
+  "PTDOB": "AVANTE"
+  "PT DO B": "AVANTE"
+  "PMB": "DEMOCRATA"
+  "SD": "SOLIDARIEDADE"
+  "SDD": "SOLIDARIEDADE"
+  "PROGRESSISTAS": "PP"
+  "PPB": "PP"
+  "PEN": "PATRIOTA"
+  "PATRI": "PATRIOTA"
+  "PFL": "DEM"
+
+# Federações partidárias registradas no TSE (metadado contextual; os votos no
+# arquivo votacao_partido_munzona continuam reportados por SG_PARTIDO individual).
+federations:
+  - code: "FE_BRASIL"
+    name: "Federação Brasil da Esperança"
+    tse_number: null
+    valid_from: 2022
+    valid_to: null
+    member_parties: ["PT", "PCDOB", "PV"]
+  - code: "FED_PSDB_CIDADANIA"
+    name: "Federação PSDB Cidadania"
+    tse_number: null
+    valid_from: 2022
+    valid_to: null
+    member_parties: ["PSDB", "CIDADANIA"]
+  - code: "FED_PSOL_REDE"
+    name: "Federação PSOL REDE"
+    tse_number: null
+    valid_from: 2022
+    valid_to: null
+    member_parties: ["PSOL", "REDE"]
+
+# =============================================================================
+# Partidos Políticos (Vigentes em 2026 + Históricos 2018–2022 para extensão)
+# =============================================================================
+parties:
+  # ---------------------------------------------------------------------------
+  # BLOCO: ESQUERDA (left: 0.00 <= score < 4.00) — Vigentes em 2026
+  # ---------------------------------------------------------------------------
+  - party_code: PSTU
+    number: 16
+    name: "Partido Socialista dos Trabalhadores Unificado"
+    score: 0.51
+    bloc: left
+    valid_from: 1994
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: PCO
+    number: 29
+    name: "Partido da Causa Operária"
+    score: 0.61
+    bloc: left
+    valid_from: 1995
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: PCB
+    number: 21
+    name: "Partido Comunista Brasileiro"
+    score: 0.91
+    bloc: left
+    valid_from: 1996
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: UP
+    number: 80
+    name: "Unidade Popular"
+    score: 1.00
+    bloc: left
+    valid_from: 2019
+    valid_to: null
+    method: manual
+    source: "Estatuto TSE 2019 (alinhado a PCB/PSOL)"
+    note: "Registrado no TSE em 10/12/2019; programa socialista revolucionário posicionado entre PCB e PSOL."
+
+  - party_code: PSOL
+    number: 50
+    name: "Partido Socialismo e Liberdade"
+    score: 1.28
+    bloc: left
+    valid_from: 2004
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Integra a Federação PSOL REDE desde 2022."
+
+  - party_code: PCDOB
+    number: 65
+    name: "Partido Comunista do Brasil"
+    score: 1.92
+    bloc: left
+    valid_from: 1988
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporou o PPL em 2019; integra a Federação Brasil da Esperança (FE Brasil) desde 2022."
+
+  - party_code: PT
+    number: 13
+    name: "Partido dos Trabalhadores"
+    score: 2.97
+    bloc: left
+    valid_from: 1980
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Integra a Federação Brasil da Esperança (FE Brasil) desde 2022."
+
+  - party_code: REDE
+    number: 18
+    name: "Rede Sustentabilidade"
+    score: 3.88
+    bloc: left
+    valid_from: 2015
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Integra a Federação PSOL REDE desde 2022."
+
+  - party_code: PDT
+    number: 12
+    name: "Partido Democrático Trabalhista"
+    score: 3.92
+    bloc: left
+    valid_from: 1980
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  # ---------------------------------------------------------------------------
+  # BLOCO: CENTRO (center: 4.00 <= score <= 6.00) — Vigentes em 2026
+  # ---------------------------------------------------------------------------
+  - party_code: PSB
+    number: 40
+    name: "Partido Socialista Brasileiro"
+    score: 4.05
+    bloc: center
+    valid_from: 1988
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: PV
+    number: 43
+    name: "Partido Verde"
+    score: 4.58
+    bloc: center
+    valid_from: 1993
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Integra a Federação Brasil da Esperança (FE Brasil) desde 2022."
+
+  - party_code: CIDADANIA
+    number: 23
+    name: "Cidadania"
+    score: 4.92
+    bloc: center
+    valid_from: 1992
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PPS)"
+    note: "Antigo Partido Popular Socialista (PPS), renomeado em 2019; integra a Federação PSDB Cidadania."
+
+  - party_code: SOLIDARIEDADE
+    number: 77
+    name: "Solidariedade"
+    score: 5.75
+    bloc: center
+    valid_from: 2013
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporou o PROS em 2023."
+
+  - party_code: AVANTE
+    number: 70
+    name: "Avante"
+    score: 5.86
+    bloc: center
+    valid_from: 1994
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PTdoB)"
+    note: "Antigo Partido Trabalhista do Brasil (PTdoB), renomeado em 2017."
+
+  - party_code: MOBILIZA
+    number: 33
+    name: "Mobilização Nacional"
+    score: 5.95
+    bloc: center
+    valid_from: 1990
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PMN)"
+    note: "Antigo Partido da Mobilização Nacional (PMN), renomeado em 2023."
+
+  - party_code: MDB
+    number: 15
+    name: "Movimento Democrático Brasileiro"
+    score: 5.98
+    bloc: center
+    valid_from: 1980
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Antigo Partido do Movimento Democrático Brasileiro (PMDB), renomeado em 2018."
+
+  # ---------------------------------------------------------------------------
+  # BLOCO: DIREITA (right: 6.00 < score <= 10.00) — Vigentes em 2026
+  # ---------------------------------------------------------------------------
+  - party_code: PSD
+    number: 55
+    name: "Partido Social Democrático"
+    score: 6.46
+    bloc: right
+    valid_from: 2011
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: PSDB
+    number: 45
+    name: "Partido da Social Democracia Brasileira"
+    score: 6.50
+    bloc: right
+    valid_from: 1988
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Integra a Federação PSDB Cidadania desde 2022."
+
+  - party_code: PODE
+    number: 20
+    name: "Podemos"
+    score: 6.72
+    bloc: right
+    valid_from: 1997
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Antigo Partido Trabalhista Nacional (PTN), renomeado em 2017; incorporou o PHS (2019) e o PSC (2023), adotando o nº 20."
+
+  - party_code: AGIR
+    number: 36
+    name: "Agir"
+    score: 6.89
+    bloc: right
+    valid_from: 1990
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PTC)"
+    note: "Antigo Partido Trabalhista Cristão (PTC), renomeado para Agir em 2022."
+
+  - party_code: DEMOCRATA
+    number: 35
+    name: "Democrata"
+    score: 6.90
+    bloc: right
+    valid_from: 2015
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PMB)"
+    note: "Antigo Partido da Mulher Brasileira (PMB, nº 35), teve a mudança de nome para Democrata aprovada pelo TSE em dezembro de 2025."
+
+  - party_code: PRD
+    number: 25
+    name: "Partido Renovação Democrática"
+    score: 7.28
+    bloc: right
+    valid_from: 2023
+    valid_to: null
+    method: derived
+    source: "Fusão PTB (6.10, 1 dep) + PATRIOTA (7.58, 4 dep)"
+    note: "Média ponderada pela bancada de deputados federais eleitos em 2022: (1*6.10 + 4*7.58)/5 = 7.28."
+
+  - party_code: DC
+    number: 27
+    name: "Democracia Cristã"
+    score: 7.35
+    bloc: right
+    valid_from: 1997
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PSDC)"
+    note: "Antigo Partido Social Democrata Cristão (PSDC), renomeado em 2018."
+
+  - party_code: PRTB
+    number: 28
+    name: "Partido Renovador Trabalhista Brasileiro"
+    score: 7.45
+    bloc: right
+    valid_from: 1997
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  - party_code: REPUBLICANOS
+    number: 10
+    name: "Republicanos"
+    score: 7.48
+    bloc: right
+    valid_from: 2005
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PRB)"
+    note: "Antigo Partido Republicano Brasileiro (PRB), renomeado em 2019."
+
+  - party_code: PP
+    number: 11
+    name: "Progressistas"
+    score: 7.62
+    bloc: right
+    valid_from: 1995
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Antigo Partido Progressista (PP / PPB)."
+
+  - party_code: PL
+    number: 22
+    name: "Partido Liberal"
+    score: 7.78
+    bloc: right
+    valid_from: 2006
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023 (como PR)"
+    note: "Antigo Partido da República (PR), renomeado para Partido Liberal (PL) em 2019."
+
+  - party_code: UNIAO
+    number: 44
+    name: "União Brasil"
+    score: 7.99
+    bloc: right
+    valid_from: 2022
+    valid_to: null
+    method: derived
+    source: "Fusão DEM (7.77, 29 dep) + PSL (8.11, 52 dep)"
+    note: "Média ponderada pela bancada de deputados federais eleitos em 2018: (29*7.77 + 52*8.11)/81 = 7.99."
+
+  - party_code: MISSAO
+    number: 14
+    name: "Partido Missão"
+    score: 8.50
+    bloc: right
+    valid_from: 2025
+    valid_to: null
+    method: manual
+    source: "Estatuto TSE 2025 (origem MBL, direita liberal-conservadora)"
+    note: "Registrado no TSE em 04/11/2025 sob o nº 14; programa ('Livro Amarelo') de direita liberal-conservadora e rigor penal."
+
+  - party_code: NOVO
+    number: 30
+    name: "Partido Novo"
+    score: 8.83
+    bloc: right
+    valid_from: 2015
+    valid_to: null
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: null
+
+  # ---------------------------------------------------------------------------
+  # PARTIDOS HISTÓRICOS EXTINTOS / INCORPORADOS / FUNDIDOS (valid_to != null)
+  # Mantidos para suportar extensão futura para eleições de 2018, 2020 e 2022
+  # e rastreabilidade explícita do cálculo de partidos derivados (UNIÃO e PRD).
+  # ---------------------------------------------------------------------------
+  - party_code: PTB
+    number: 14
+    name: "Partido Trabalhista Brasileiro"
+    score: 6.10
+    bloc: right
+    valid_from: 1981
+    valid_to: 2022
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Fundido com o PATRIOTA em novembro de 2023 para formar o PRD (25)."
+
+  - party_code: PHS
+    number: 31
+    name: "Partido Humanista da Solidariedade"
+    score: 6.96
+    bloc: right
+    valid_from: 1997
+    valid_to: 2018
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporado ao PODE (20) em setembro de 2019."
+
+  - party_code: PPL
+    number: 54
+    name: "Partido Pátria Livre"
+    score: 7.27
+    bloc: right
+    valid_from: 2011
+    valid_to: 2018
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporado ao PCdoB (65) em maio de 2019."
+
+  - party_code: PROS
+    number: 90
+    name: "Partido Republicano da Ordem Social"
+    score: 7.47
+    bloc: right
+    valid_from: 2013
+    valid_to: 2022
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporado ao SOLIDARIEDADE (77) em fevereiro de 2023."
+
+  - party_code: PATRIOTA
+    number: 51
+    name: "Patriota"
+    score: 7.58
+    bloc: right
+    valid_from: 2012
+    valid_to: 2022
+    method: survey
+    source: "Bolognesi et al. 2023 (como PEN/Patriota)"
+    note: "Antigo Partido Ecológico Nacional (PEN); incorporou o PRP em 2019 e fundiu-se com o PTB em 2023 para formar o PRD (25)."
+
+  - party_code: PRP
+    number: 44
+    name: "Partido Republicano Progressista"
+    score: 7.59
+    bloc: right
+    valid_from: 1991
+    valid_to: 2018
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporado ao PATRIOTA (51) em fevereiro de 2019."
+
+  - party_code: DEM
+    number: 25
+    name: "Democratas"
+    score: 7.77
+    bloc: right
+    valid_from: 1985
+    valid_to: 2021
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Antigo PFL; fundido com o PSL em fevereiro de 2022 para formar o UNIÃO (44)."
+
+  - party_code: PSL
+    number: 17
+    name: "Partido Social Liberal"
+    score: 8.11
+    bloc: right
+    valid_from: 1998
+    valid_to: 2021
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Fundido com o DEM em fevereiro de 2022 para formar o UNIÃO (44)."
+
+  - party_code: PSC
+    number: 20
+    name: "Partido Social Cristão"
+    score: 8.33
+    bloc: right
+    valid_from: 1990
+    valid_to: 2022
+    method: survey
+    source: "Bolognesi et al. 2023"
+    note: "Incorporado ao PODE (20) em junho de 2023."
