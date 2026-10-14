@@ -1,4 +1,4 @@
-# Território Eleitoral 🗳️🗺️
+# Território Eleitoral
 
 > **Plataforma aberta de *storytelling* de dados e inteligência geoespacial que cruza os resultados das Eleições Gerais com os indicadores sociais, econômicos e fiscais dos 5.571 municípios brasileiros.**
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 🎯 Pergunta Central
+## Pergunta Central
 
 > *"Como as condições econômicas, de vulnerabilidade social e de capacidade fiscal de um município se relacionam com o comportamento eleitoral de sua população nas urnas?"*
 
@@ -22,13 +22,13 @@ O **Território Eleitoral** vai muito além de mapas convencionais que apenas mo
 
 ---
 
-## 🏛️ Arquitetura do Sistema ("As Quatro Caixas")
+## Arquitetura do Sistema ("As Quatro Caixas")
 
 O projeto é estruturado em uma arquitetura modular clara, inspirada no modelo *Fábrica → Memória → Cérebro → Palco*, separando com rigor a ingestão massiva de dados, a persistência relacional/espacial, a inteligência analítica e a camada de visualização interativa:
 
 ```mermaid
 flowchart LR
-    subgraph Fontes["🌐 Fontes Públicas Oficiais"]
+    subgraph Fontes["Fontes Públicas Oficiais"]
         TSE["TSE Dados Abertos<br/>Votação por Município/Zona"]
         IBGE["IBGE<br/>Malha 2025, SIDRA, Cidades"]
         CGU["Portal da Transparência<br/>Bolsa Família & BPC"]
@@ -36,25 +36,25 @@ flowchart LR
         MKT["Índices Comparativos<br/>Firjan, IPS, IPEA, IDHM"]
     end
 
-    subgraph Fabrica["🏭 1. A Fábrica (ETL Python)"]
+    subgraph Fabrica["1. A Fábrica (ETL Python)"]
         EX["Extract<br/>Streaming + SHA-256 + Cache"]
         TR["Transform<br/>Pandas + Geopandas + Pandera"]
         XW["Crosswalk<br/>De-Para Estrito 1:1 TSE↔IBGE"]
         LD["Load<br/>PostGIS Bulk COPY"]
     end
 
-    subgraph Memoria["🗄️ 2. A Memória (PostGIS)"]
+    subgraph Memoria["2. A Memória (PostGIS)"]
         PG[("PostgreSQL 17 + PostGIS 3.5<br/>• 5.571 municípios (3 LODs)<br/>• Votação por Partido & Cargo<br/>• Views Materializadas (MVs)<br/>• Índices Espaciais GiST")]
     end
 
-    subgraph Cerebro["🧠 3. O Cérebro (API & Analytics)"]
+    subgraph Cerebro["3. O Cérebro (API & Analytics)"]
         API["FastAPI<br/>ORJSON + ETag/304"]
         TILE["Vector Tiles MVT<br/>ST_AsMVT Dinâmico"]
         STAT["Motor Estatístico<br/>Spearman, Pearson, Decis Ponderados"]
         INS["Gerador de Insights<br/>100% Determinístico (Zero LLM)"]
     end
 
-    subgraph Palco["🎨 4. O Palco (Frontend Preact)"]
+    subgraph Palco["4. O Palco (Frontend Preact)"]
         MAP["MapLibre GL JS<br/>MVT + setFeatureState (<300ms)"]
         SCAT["Scatter Plot Híbrido<br/>D3 + Quadtree + Regressão"]
         DEC["Decile Bar Chart<br/>Ponderação por Eleitorado"]
@@ -78,7 +78,7 @@ flowchart LR
 
 ---
 
-## ✨ Principais Funcionalidades Implementadas
+## Principais Funcionalidades Implementadas
 
 ### 1. Mapa Coroplético de Alta Fluidez (< 300 ms de Recoloração)
 - **Renderização vetorial eficiente:** as geometrias dos 5.571 municípios são servidas em Mapbox Vector Tiles binários (`.pbf`) diretamente do PostGIS via `ST_AsMVT`.
@@ -99,13 +99,13 @@ flowchart LR
 
 ### 4. Trilhas Narrativas Prontas (*Story Tracks*)
 Sete investigações pré-configuradas que revelam os grandes padrões e fraturas do cenário político-social brasileiro com um único clique:
-1. 🛡️ **Proteção Social e Bolsa Família:** Volume de transferências de renda per capita vs. voto de esquerda.
-2. 🌟 **Desenvolvimento Humano (IDHM):** Correlação de longevidade, educação e renda municipal com o espectro político.
-3. 📊 **Concentração de Renda (Índice de Gini):** Onde a desigualdade de renda é extrema, como o voto se comporta?
-4. ⚖️ **Desigualdade e CadÚnico:** Proporção de famílias de baixa renda e o voto nos blocos partidários.
-5. 🌾 **O Cinturão do Agronegócio:** A influência da participação da agropecuária no PIB municipal sobre as urnas.
-6. 🏙️ **Metrópoles vs. Interior:** A clivagem entre grandes capitais cosmopolitas e municípios de pequeno porte.
-7. 🏛️ **Autonomia Fiscal Municipal:** Como a capacidade de arrecadação própria frente à dependência do FPM molda a eleição legislativa.
+1. **Proteção Social e Bolsa Família:** Volume de transferências de renda per capita vs. voto de esquerda.
+2. **Desenvolvimento Humano (IDHM):** Correlação de longevidade, educação e renda municipal com o espectro político.
+3. **Concentração de Renda (Índice de Gini):** Onde a desigualdade de renda é extrema, como o voto se comporta?
+4. **Desigualdade e CadÚnico:** Proporção de famílias de baixa renda e o voto nos blocos partidários.
+5. **O Cinturão do Agronegócio:** A influência da participação da agropecuária no PIB municipal sobre as urnas.
+6. **Metrópoles vs. Interior:** A clivagem entre grandes capitais cosmopolitas e municípios de pequeno porte.
+7. **Autonomia Fiscal Municipal:** Como a capacidade de arrecadação própria frente à dependência do FPM molda a eleição legislativa.
 
 ### 5. Jornada de Storytelling em 4 Etapas
 Um fluxo guiado estruturado para o usuário comum e jornalistas:
@@ -128,9 +128,9 @@ Um fluxo guiado estruturado para o usuário comum e jornalistas:
 
 ---
 
-## 🔬 Detalhamento Técnico das Camadas
+## Detalhamento Técnico das Camadas
 
-### 🏭 1. A Fábrica de Dados (ETL)
+### 1. A Fábrica de Dados (ETL)
 Localizada em [`backend/src/territorio/etl`](backend/src/territorio/etl):
 - **Cliente HTTP Resiliente (`http.py`):** Download via streaming, limitador de taxa *token-bucket*, tentativas exponenciais (*retry* com *backoff*), cache local em disco com verificação criptográfica de integridade por hash **SHA-256**.
 - **Registro de Proveniência (`provenance.py`):** Cada arquivo processado gera um registro em `etl_run` contendo URL de origem, data de coleta, hash SHA-256 e tamanho.
@@ -146,7 +146,7 @@ Localizada em [`backend/src/territorio/etl`](backend/src/territorio/etl):
   - `manual_file.py`: Ingestão dos índices compostos de mercado (Firjan IFDM/IFGF, IPS Brasil, IPEA IVS e Atlas Brasil IDHM).
 - **Verificação de Aceitação (`verify.py`):** Auditoria pós-ETL que roda checagens de completude (E1–E5, I1–I4, G1–G3) e emite relatórios de qualidade em JSON e Markdown.
 
-### 🗄️ 2. A Memória (Banco de Dados e Modelo Relacional)
+### 2. A Memória (Banco de Dados e Modelo Relacional)
 Localizada em [`backend/src/territorio/db`](backend/src/territorio/db):
 - **Motor:** PostgreSQL 17 com extensão geoespacial PostGIS 3.5 e extensão `unaccent` para busca textual insensível a acentuação.
 - **Migrações:** Gerenciadas de forma versionada pelo Alembic (`alembic.ini`).
@@ -161,7 +161,7 @@ Localizada em [`backend/src/territorio/db`](backend/src/territorio/db):
   - `etl_run`: Tabela de auditoria de proveniência de dados.
 - **Views Materializadas:** Pré-computam o resultado eleitoral por município (`mv_municipality_result`), a distribuição de votos por bloco ideológico (`mv_bloc_share`) e o valor mais recente de cada indicador (`mv_indicator_current`), assegurando consultas analíticas abaixo de 50 ms.
 
-### 🧠 3. O Cérebro (API FastAPI & Analytics)
+### 3. O Cérebro (API FastAPI & Analytics)
 Localizado em [`backend/src/territorio/api`](backend/src/territorio/api) e [`backend/src/territorio/analytics`](backend/src/territorio/analytics):
 - **FastAPI Moderno:** Construído em Python 3.12 com injeção de dependências tipadas, serialização de alta velocidade via `orjson` e tratamento unificado de erros com envelopes padronizados.
 - **Cache HTTP e Condicional:** Headers `ETag` calculados com base no identificador de versão do dataset (`X-Dataset-Version`). Respostas `304 Not Modified` imediatas economizam banda e tempo de processamento.
@@ -175,7 +175,7 @@ Localizado em [`backend/src/territorio/api`](backend/src/territorio/api) e [`bac
   - `GET /api/v1/municipalities/{cd_ibge}`: Ficha cadastral e estatística completa de um município.
   - `GET /api/v1/municipalities/search`: Autocomplete com busca fonética/sem acento por nome ou UF.
 
-### 🎨 4. O Palco (Frontend Preact, MapLibre & D3)
+### 4. O Palco (Frontend Preact, MapLibre & D3)
 Localizado em [`frontend/src`](frontend/src):
 - **Preact 10 + TypeScript + Vite:** Aplicação leve (< 150 KB de bundle JS inicial), reatividade com `@preact/signals` para estado atômico sem re-renderizações desnecessárias.
 - **MapLibre GL JS 5.1:** Renderização WebGL acelerada por hardware de mapas vetoriais com controle estrito de memória e destruição limpa de instâncias no ciclo de vida.
@@ -186,7 +186,7 @@ Localizado em [`frontend/src`](frontend/src):
 
 ---
 
-## 📊 Fontes Oficiais e Metodologia Científica
+## Fontes Oficiais e Metodologia Científica
 
 ### Fontes Integradas
 1. **TSE (Tribunal Superior Eleitoral):** Repositório de Dados Abertos (Votação por município e zona, comparecimento e justificativa).
@@ -212,7 +212,7 @@ A tabela completa é versionada transparentemente em [`backend/data/reference/pa
 
 ---
 
-## 🚀 Como Executar o Projeto Localmente
+## Como Executar o Projeto Localmente
 
 ### Pré-requisitos
 - **Docker & Docker Compose** (para o PostgreSQL 17 + PostGIS 3.5).
@@ -299,7 +299,7 @@ Abra [http://localhost:5173](http://localhost:5173) no seu navegador para acessa
 
 ---
 
-## 🛠️ Utilitário de Linha de Comando (`territorio` CLI)
+## Utilitário de Linha de Comando (`territorio` CLI)
 
 O backend dispõe de um CLI completo construído com `typer`:
 
@@ -322,7 +322,7 @@ Comandos:
 
 ---
 
-## 🧪 Qualidade de Código e Suíte de Testes
+## Qualidade de Código e Suíte de Testes
 
 O projeto segue rigorosos padrões de engenharia de software e testes orientados por TDD:
 - **Backend:** 97 testes automatizados com `pytest` e `pytest-mock` (proibido o uso de `unittest`).
@@ -346,7 +346,7 @@ npm run test:run
 
 ---
 
-## 📂 Estrutura do Repositório
+## Estrutura do Repositório
 
 ```text
 territorio_eleitoral/
@@ -402,7 +402,7 @@ territorio_eleitoral/
 
 ---
 
-## 📚 Mapa da Documentação Técnica
+## Mapa da Documentação Técnica
 
 Para aprofundar-se em qualquer aspecto técnico do projeto, consulte a documentação detalhada:
 
@@ -423,7 +423,7 @@ Para aprofundar-se em qualquer aspecto técnico do projeto, consulte a documenta
 
 ---
 
-## ⚖️ Regras Inegociáveis (Golden Rules)
+## Regras Inegociáveis (Golden Rules)
 
 1. **`cd_ibge` (7 dígitos, `int`) é o identificador canônico de município** em todo o sistema (banco, API e frontend). Códigos do TSE e códigos de 6 dígitos são convertidos imediatamente na camada de ETL.
 2. **Nenhum `merge` sem validação:** Todas as uniões de dados usam validação estrita com verificação de integridade referencial.
@@ -435,6 +435,6 @@ Para aprofundar-se em qualquer aspecto técnico do projeto, consulte a documenta
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto é desenvolvido para fins de transparência pública, pesquisa acadêmica e jornalismo de dados sob licença aberta [MIT](LICENSE). Dados governamentais mantêm suas respectivas licenças públicas originais (TSE, IBGE, CGU, Tesouro Nacional).
