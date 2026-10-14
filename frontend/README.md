@@ -377,9 +377,16 @@ O frontend dispõe de um [`Dockerfile`](Dockerfile) multi-stage focado em alta e
 
 ## Documentação de Referência
 
-- [**README Geral da Plataforma**](../README.md) — Visão do produto, arquitetura macro e comandos gerais.
-- [**README do Backend**](../backend/README.md) — Engenharia do pipeline de dados, PostGIS, API FastAPI e análises.
-- [**AGENTS.md**](../AGENTS.md) — Diretrizes de código e regras para agentes e engenheiros.
-- [**docs/09-frontend.md**](../docs/09-frontend.md) — Especificação técnica profunda da interface e do MapLibre.
-- [**docs/10-design-system.md**](../docs/10-design-system.md) — Design system, tokens, paletas e especificações de acessibilidade.
-- [**docs/13-decisoes-arquiteturais.md**](../docs/13-decisoes-arquiteturais.md) — ADRs arquiteturais estruturantes.
+Para detalhes aprofundados sobre a arquitetura da interface, design system, componentes e decisões do frontend, consulte a **documentação técnica oficial do projeto**:
+
+- [**docs/README.md**](../docs/README.md) — Portal Central da Documentação: Sumário executivo, glossário canônico e resumo das 7 Decisões de Ouro do MVP.
+- [**docs/01-produto.md**](../docs/01-produto.md) — Visão do produto, personas reais, jornada em 4 passos (*Story Stepper*) e trilhas narrativas.
+- [**docs/02-arquitetura.md**](../docs/02-arquitetura.md) — As Quatro Caixas e a separação de responsabilidades (por que o Palco não calcula estatísticas).
+- [**docs/07-metodologia.md**](../docs/07-metodologia.md) — Metodologia científica, cálculo de decis ponderados por voto e regra de linguagem ecológica.
+- [**docs/08-api.md**](../docs/08-api.md) — Contratos dos endpoints REST e especificação dos Vector Tiles MVT consumidos pelo MapLibre.
+- [**docs/09-frontend.md**](../docs/09-frontend.md) — Arquitetura técnica profunda do Palco, Preact 10, Signals, MapLibre GL WebGL e D3 Quadtree.
+- [**docs/10-design-system.md**](../docs/10-design-system.md) — Design system "Atlas Cívico Editorial", reserva cromática inegociável, tokens e WCAG 2.2 AA.
+- [**docs/11-padroes-e-testes.md**](../docs/11-padroes-e-testes.md) — Padrões de engenharia, suíte de testes Vitest e automação E2E headless.
+- [**docs/13-decisoes-arquiteturais.md**](../docs/13-decisoes-arquiteturais.md) — Decisões estruturantes (ADR-002 de MVT e `feature-state`, ADR-006 de separação cromática, etc.).
+- [**README Geral da Plataforma**](../README.md) — Visão macro do produto e guia de execução da stack completa.
+- [**README do Backend**](../backend/README.md) — Engenharia da Fábrica de dados, PostGIS, API FastAPI e análises.
