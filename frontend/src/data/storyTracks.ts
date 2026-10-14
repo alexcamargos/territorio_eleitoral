@@ -1,0 +1,130 @@
+import type { StoryTrack } from "../types/api";
+
+export const STORY_TRACKS: readonly StoryTrack[] = [
+  {
+    id: "social_safety",
+    icon: "🛡️",
+    title: "Proteção Social e Bolsa Família",
+    short_title: "Bolsa Família",
+    theme: "Transferências de Renda",
+    question: "Como o volume de transferências de renda per capita se relaciona com o voto?",
+    description:
+      "Cruze os municípios com maior dependência de transferências sociais do Bolsa Família com o comportamento nas urnas.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "left",
+      indicator: "bolsa_familia_pc",
+      uf: null,
+    },
+  },
+  {
+    id: "human_development",
+    icon: "🌟",
+    title: "Desenvolvimento Humano (IDHM)",
+    short_title: "IDH Municipal",
+    theme: "Qualidade de Vida",
+    question: "Municípios com maior índice de desenvolvimento humano votam de forma diferente?",
+    description:
+      "Avalie a correlação entre longevidade, educação e renda municipal agregadas no IDHM e os blocos políticos.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "right",
+      indicator: "idhm",
+      uf: null,
+    },
+  },
+  {
+    id: "inequality_gini",
+    icon: "📊",
+    title: "Concentração de Renda (Índice de Gini)",
+    short_title: "Índice de Gini",
+    theme: "Desigualdade Econômica",
+    question: "Como a desigualdade de renda municipal medida pelo Gini se relaciona com o voto?",
+    description:
+      "Examine a correlação entre a concentração de renda pelo Índice de Gini e o voto nos blocos políticos.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "left",
+      indicator: "gini",
+      uf: null,
+    },
+  },
+  {
+    id: "inequality_vulnerability",
+    icon: "⚖️",
+    title: "Desigualdade e Vulnerabilidade Social",
+    short_title: "CadÚnico / Baixa Renda",
+    theme: "Social e Demografia",
+    question: "Qual o impacto da proporção de famílias de baixa renda na divisão eleitoral?",
+    description:
+      "Analise municípios com maior vulnerabilidade e famílias inscritas no Cadastro Único frente aos resultados eleitorais.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "left",
+      indicator: "low_income_households_pct",
+      uf: null,
+    },
+  },
+  {
+    id: "agro_belt",
+    icon: "🌾",
+    title: "O Cinturão do Agronegócio",
+    short_title: "Voto Agro",
+    theme: "Economia e Produção",
+    question: "Como a participação da agropecuária no PIB municipal molda o comportamento político?",
+    description:
+      "Explore o comportamento dos municípios polos de agronegócio no Centro-Oeste, Sul e fronteira agrícola.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "right",
+      indicator: "gdp_agro_share",
+      uf: null,
+    },
+  },
+  {
+    id: "urban_scale",
+    icon: "🏙️",
+    title: "Metrópoles vs. Interior",
+    short_title: "Porte Urbano",
+    theme: "Demografia e Porte",
+    question: "Grandes centros urbanos votam igual a pequenos municípios rurais?",
+    description:
+      "Verifique a clivagem eleitoral entre capitais cosmopolitas e cidades de pequeno porte no interior do país.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "president",
+      bloc: "left",
+      indicator: "population_estimate",
+      uf: null,
+    },
+  },
+  {
+    id: "fiscal_autonomy",
+    icon: "🏛️",
+    title: "Autonomia Fiscal Municipal",
+    short_title: "Autonomia Fiscal",
+    theme: "Gestão Fiscal",
+    question: "Municípios com arrecadação própria votam diferente dos dependentes do FPM?",
+    description:
+      "Investigue se a capacidade tributária local e a independência financeira afetam a escolha para a Câmara Federal.",
+    preset: {
+      year: 2026,
+      round: 1,
+      office: "federal_deputy",
+      bloc: "right",
+      indicator: "fiscal_autonomy_pct",
+      uf: null,
+    },
+  },
+];
